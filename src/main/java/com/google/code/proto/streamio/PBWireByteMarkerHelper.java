@@ -19,6 +19,14 @@ public class PBWireByteMarkerHelper {
      */
     public static final byte markerForStart = (byte)0x80;
     
+    // To follow up on complete compliance:
+    //http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
+    //  Frames denoted by bytes that have the high bit set (0x80 to
+    //0xFF) have a leading length indicator, which is encoded as a series
+    //of 7-bit bytes stored in octets with the 8th bit being set for all
+    //but the last byte.  The remainder of the frame is then as much data
+    //as was specified.
+    
     /**
      * Size of the message size containing portion of the delimeter
      */
