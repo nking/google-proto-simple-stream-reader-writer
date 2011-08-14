@@ -12,10 +12,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A reader for an input stream of Google protocol buffer serialized objects.
+ * A reader for an input stream of Google protocol buffer generated messages.
  * 
- * The delimiter to separate serialized objects is 
- *     a start byte of 0x80 followed by a 4-byte big-endian integer of the length of bytes.
  * 
  * @author nichole
  */
@@ -28,13 +26,10 @@ public class PBStreamReader<T extends GeneratedMessage> {
     public <T> PBStreamReader() {
         finishedReadingStream = false;
     }
-
-    public void stopReadingStream() {
-        finishedReadingStream = true;
-    }
        
     /**
-     * read until find the next startMarker and return the subsequent byteMarkerSize bytes in byteMarker.  
+     * Read until find the next startMarker and return the subsequent byteMarkerSize 
+     * bytes in byteMarker.  
      * The return from the method itself is a byte array of the 
      * remaining bytes that were read from the stream after the byteMarker.
      * 
@@ -47,7 +42,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
      * @param startByte
      * @param byteMarker 
      * @param byteMarkerSize this is the byteMarker minus the start byte size
-     * @return
+     * @return byte array of bytes read from stream beyond the found byteMarker
      * @throws IOException
      */
     protected byte[] readUntilNextStartMarker(InputStream inStream, byte[] remnant, int bufferSize,
@@ -74,7 +69,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
             sum = remnant.length;
             bufferSize = bufferSize + remnant.length;
             buffer = new byte[bufferSize];
-            System.arraycopy(remnant, 0, buffer, 0, sum);  // (Object src, int srcPos, Object dest, int destPos, int length)
+            System.arraycopy(remnant, 0, buffer, 0, sum);
             remnant = null;
         } else {
             log.log(Level.FINE, "reading stream ");
@@ -153,11 +148,12 @@ public class PBStreamReader<T extends GeneratedMessage> {
     }
     
     /**
-     * read instances of AbstractMessage from the stream using the given builder to unmarshal them.
+     * Read instances of GeneratedMessage from the input stream and use the 
+     * given builder to unmarshall the messages.
      * 
      * @param inStream
      * @param messageBuilder
-     * @return
+     * @return list of GeneratedMessage instances decoded and deserialized from input stream
      * @throws IOException
      * @throws InstantiationException
      * @throws IllegalAccessException 
@@ -204,10 +200,10 @@ public class PBStreamReader<T extends GeneratedMessage> {
                 remnant = remn;
             }
             
-            // ----- we have message length bytes now in remnant and can  unmarshal the message  -------
+            // ----- we have message length bytes in remnant now and can decode and deserialize message -------
                 
             byte[] messageBytes = new byte[messageLength];
-            System.arraycopy(remnant, 0, messageBytes, 0, messageLength);  // (Object src, int srcPos, Object dest, int destPos, int length)
+            System.arraycopy(remnant, 0, messageBytes, 0, messageLength);
 
             CodedInputStream codedInStream = CodedInputStream.newInstance(messageBytes);
             messageBuilder.mergeFrom(codedInStream);
@@ -221,7 +217,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
             if (remnant.length == messageLength) {
                 remnant = null;
             } else {
-                byte[] remn = Arrays.copyOfRange(remnant, messageLength, remnant.length);// src, from, to
+                byte[] remn = Arrays.copyOfRange(remnant, messageLength, remnant.length);
                 remnant = remn;
             }
         }

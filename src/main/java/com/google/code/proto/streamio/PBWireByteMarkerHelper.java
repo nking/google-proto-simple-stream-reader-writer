@@ -6,21 +6,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Utility class to help write the start marker for Google protocol buffer items
- * that are to be serialized and written to a stream.
- * 
- * The delimiter to separate serialized objects is 
- *     a start byte of 0x80 followed by a 4-byte big-endian integer of the length of bytes
- * 
+ * A utility class to help write the delimiting byte markers for Google protocol buffer 
+ * generated messages used with PBStreamReader.
+ *
+ *  
  * @author nichole
  */
 public class PBWireByteMarkerHelper {
     
+    /**
+     * Web-socket friendly start byte marker for delimiter
+     */
     public static final byte markerForStart = (byte)0x80;
     
+    /**
+     * Size of the message size containing portion of the delimeter
+     */
     public static final int byteMarkerSize = 4;
     
-    // 1 byte start + 4 bytes for length
+    /**
+     * The total size of a delimeter (used when marshalling/unmarshalling GeneratedMessages)
+     */
     public static final int delimiterSize = byteMarkerSize + 1;
 
     public static int estimateTotalContentLength(List<? extends GeneratedMessage> messages) {
@@ -41,12 +47,12 @@ public class PBWireByteMarkerHelper {
     }
   
     /**
-     * create a 5 byte marker for the start of the item to be serialized.
-     * the first byte is markerForStart and the next 4 hold the size of the
-     * subsequent serialized data.
+     * Create a delimiter for the given GeneratedMessage.
      * 
-     * @param message
-     * @return a byte array of size 5 for start of serialized data
+     * @param message instance of GeneratedMessage
+     * @return byte array of size delimiterSize, to be used preceding serialized GeneratedMessages
+     *   in a stream.  The delimiter to separate serialized objects is 
+     *   a start byte of 0x80 followed by a 4-byte big-endian integer of the length of bytes.
      */
     public static byte[] createMessageDelimiter(GeneratedMessage message) {
         
@@ -62,12 +68,12 @@ public class PBWireByteMarkerHelper {
     }
 
     /**
-     * convert the integer into a byte array composed of byte shifted parts of the integer.
+     * Convert the integer into a byte array composed of byte shifted parts of the integer.
      * 
      * @param sz the integer to be represented by the returned byte array
      * @return 
      */
-    public static byte[] integerTo4ByteBigEndian(int sz) {
+     static byte[] integerTo4ByteBigEndian(int sz) {
          
         byte[] marker = new byte[4];
         
@@ -99,12 +105,12 @@ public class PBWireByteMarkerHelper {
     }
     
     /**
-     * convert the marker byte array to an integer where each item is part of byte shifted integer
+     * Convert the marker byte array to an integer where each item is part of byte shifted integer
      * 
      * @param marker
      * @return 
      */
-    public static int bytesToInteger(byte[] marker) {
+     static int bytesToInteger(byte[] marker) {
         
         byte b00 = (byte)marker[0];
         byte b08 = (byte)marker[1];
