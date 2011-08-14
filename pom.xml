@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.google.code</groupId>
+    <artifactId>google-proto-simple-reader-writer</artifactId>
+    <version>0.1</version>
+    <packaging>jar</packaging>
+    <name>Google Protocol Buffer Stream Reader/Writer</name>
+    <organization>
+    </organization>
+    <description>A package to read and write Google Protocol Buffer messages to/from Input/Output Streams</description>
+    <developers>
+        <developer>
+            <name>Nichole King</name>
+        </developer>
+    </developers>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${java.source.version}</source>
+                    <target>${java.target.version}</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+            <!--  Install protoc on your computer to use this -->
+            <!--
+            <plugin>
+                <groupId>com.google.protobuf.tools</groupId>
+                <artifactId>maven-protoc-plugin</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <protoSourceRoot>${basedir}/src/main/java/com/google/code/proto/model</protoSourceRoot>
+                            <includes>
+                                <param>**/*.proto</param>
+                            </includes>
+                            <excludes>
+                                <param>**/target/**</param>
+                                <param>**/target/*</param>
+                            </excludes>
+                            <outputDirectory>${basedir}/src/main/java/</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <protocExecutable>protoc</protocExecutable>
+                </configuration>
+            </plugin>
+            -->
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>2.4.0a</version>
+        </dependency>
+    </dependencies>
+    <properties>
+        <java.source.version>1.6</java.source.version>
+        <java.target.version>1.6</java.target.version>
+        <appengine.api.version>1.5.0</appengine.api.version>
+    </properties>
+</project>

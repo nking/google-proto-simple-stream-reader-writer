@@ -1,0 +1,51 @@
+
+A simple library to read and write Protocol Buffer messages to input and output streams.
+
+Example write:
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException {
+
+        BufferedOutputStream out = null;
+        
+        try {
+                        
+            List<EventPB> events = Util.getPBList(req);
+
+            resp.setContentType("application/octet-stream");
+                
+            int expectedSize = PBWireByteMarkerHelper.estimateTotalContentLength(events);
+                
+            resp.setContentLength(expectedSize);
+
+            out = new BufferedOutputStream(resp.getOutputStream(), 1024);
+
+            PBStreamWriter.writeToStream(out, events);
+
+        } catch (Throwable t) {
+
+            log.severe(t.getMessage());
+ 
+            t.printStackTrace();
+
+            resp.setStatus(500);
+
+        } finally {
+
+            if (out != null)
+                out.close();
+        }
+    }
+
+
+Example read:
+
+   PBStreamReader pbReader = new PBStreamReader();
+   Builder builder = EventPB.newBuilder();
+   List<EventPB> res = pbReader.read(inStream, builder);
+ 
+
+Note, that the build pom.xml includes a plugin to compile your .proto files, but you need
+to have the proto binary installed on your computer.
+http://code.google.com/apis/protocolbuffers/
