@@ -4,18 +4,59 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.google.code.google-proto-simple-reader-writer</groupId>
     <artifactId>gpb-stream-reader-writer</artifactId>
-    <version>0.1</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
-    <name>Google Protocol Buffer Stream Reader/Writer</name>
-    <organization>
-    </organization>
-    <description>A package to read and write Google Protocol Buffer messages to/from Input/Output Streams</description>
+    <name>Google Protocol Buffer Stream Reader and Writer</name>
+    <description>A package to read and write Google Protocol Buffer messages to and from Input and Output Streams</description>
+    <url>http://code.google.com/p/google-proto-simple-stream-reader-writer/</url>
+    <scm>
+        <connection>http://code.google.com/p/google-proto-simple-stream-reader-writer/source/checkout</connection>
+        <url>http://code.google.com/p/google-proto-simple-stream-reader-writer/source/checkout</url>
+    </scm>
+    <licenses>
+        <license>
+            <name>The MIT License (MIT), Copyright (c) 2011 Climb With Your Feet software</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <developers>
         <developer>
             <name>Nichole King</name>
         </developer>
     </developers>
-
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mavenExecutorId>forked-path</mavenExecutorId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <build>
         <plugins>
             <plugin>
@@ -102,6 +143,5 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <properties>
         <java.source.version>1.6</java.source.version>
         <java.target.version>1.6</java.target.version>
-        <appengine.api.version>1.5.0</appengine.api.version>
     </properties>
 </project>
