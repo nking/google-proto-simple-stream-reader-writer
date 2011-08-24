@@ -25,38 +25,6 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
             <name>Nichole King</name>
         </developer>
     </developers>
-    <profiles>
-        <profile>
-            <id>release-sign-artifacts</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.1</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <mavenExecutorId>forked-path</mavenExecutorId>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
     <build>
         <plugins>
             <plugin>
@@ -82,7 +50,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>2.2</version>
             </plugin>
-            <!--  Install protoc on your computer to use this -->
+            <!--  Install protoc on your computer to use this, and change the configuration for your directories -->
             <!--
             <plugin>
                 <groupId>com.google.protobuf.tools</groupId>
@@ -96,7 +64,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <protoSourceRoot>${basedir}/src/main/java/com/google/code/proto/model</protoSourceRoot>
+                            <protoSourceRoot>${basedir}/src/test/java/com/google/code/proto/model</protoSourceRoot>
                             <includes>
                                 <param>**/*.proto</param>
                             </includes>
@@ -104,7 +72,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                                 <param>**/target/**</param>
                                 <param>**/target/*</param>
                             </excludes>
-                            <outputDirectory>${basedir}/src/main/java/</outputDirectory>
+                            <outputDirectory>${basedir}/src/test/java/</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -123,6 +91,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                     <destDir>apidocs</destDir>
                     <encoding>UTF-8</encoding>
                     <docencoding>UTF-8</docencoding>
+                    <show>public</show>
                 </configuration>
             </plugin>
         </plugins>

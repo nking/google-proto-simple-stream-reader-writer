@@ -111,7 +111,7 @@ public class PBStreamReaderTest extends TestCase {
         public void run() {
             try {
                 writeLatch.await();
-                PBStreamReader pbReader = new PBStreamReader();
+                PBStreamReader<ExampleMsg> pbReader = new PBStreamReader();
                 Builder builder = ExampleMsg.newBuilder();
                 List<ExampleMsg> res = pbReader.read(pipedIn, builder);
                 results.addAll(res);

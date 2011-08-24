@@ -11,17 +11,17 @@ Example write:
         
         try {
                         
-            List<EventPB> events = Util.getPBList(req);
+            List<YourGoogleProtocolBufferMessages> messages = getGPBMessages(req);
 
             resp.setContentType("application/octet-stream");
                 
-            int expectedSize = PBWireByteMarkerHelper.estimateTotalContentLength(events);
+            int expectedSize = PBWireByteMarkerHelper.estimateTotalContentLength(messages);
                 
             resp.setContentLength(expectedSize);
 
             out = new BufferedOutputStream(resp.getOutputStream(), 1024);
 
-            PBStreamWriter.writeToStream(out, events);
+            PBStreamWriter.writeToStream(out, messages);
 
         } catch (Throwable t) {
 
@@ -41,11 +41,14 @@ Example write:
 
 Example read:
 
-   PBStreamReader pbReader = new PBStreamReader();
+   PBStreamReader<YourGoogleProtocolBufferMessages> pbReader = new PBStreamReader();
    Builder builder = EventPB.newBuilder();
-   List<EventPB> res = pbReader.read(inStream, builder);
+   List<YourGoogleProtocolBufferMessages> messages = pbReader.read(inStream, builder);
  
 
-Note, that the build pom.xml includes a plugin to compile your .proto files, but you need
+Note, that the project's pom.xml includes a plugin to compile your .proto files, but you need
 to have the proto binary installed on your computer.
 http://code.google.com/apis/protocolbuffers/
+An example of a .proto file and the generated java file is in the test directory of the source code.
+http://code.google.com/p/google-proto-simple-stream-reader-writer/source/browse/src/#src%2Ftest%2Fjava%2Fcom%2Fgoogle%2Fcode%2Fproto%2Fmodel
+

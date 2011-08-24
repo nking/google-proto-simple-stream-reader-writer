@@ -14,6 +14,15 @@ import java.util.logging.Logger;
 /**
  * A reader for an input stream of Google protocol buffer generated messages.
  * 
+ * <br />
+ * <br />
+ * <b>Usage:</b><br />
+ * {@code PBStreamReader<YourProtocolBufferMessage> pbReader = new PBStreamReader();}
+ * <br />
+ * {@code Builder builder = YourProtocolBufferMessage.newBuilder();}
+ * <br />
+ * {@code List<YourProtocolBufferMessage> messages = pbReader.read(inStream, builder);}
+ * <br />
  * 
  * @author nichole
  */
@@ -23,10 +32,34 @@ public class PBStreamReader<T extends GeneratedMessage> {
     
     protected Logger log = Logger.getLogger(this.getClass().getName());
 
+    protected final PBWireByteMarkerHelper gpbWireByteMarkerHelper;
+
+    /**
+     * Default constructor.
+     * 
+     * @param <T> Parameterized type that is a specialization of GeneratedMessage
+     */
     public <T> PBStreamReader() {
+        
         finishedReadingStream = false;
+        
+        gpbWireByteMarkerHelper = new PBWireByteMarkerHelper();
     }
-       
+
+    /**
+     * Alternate constructor for use with a specialized PBWireByteMarkerHelper
+     * 
+     * @param <T> Parameterized type that is a specialization of GeneratedMessage
+     * @param pbWireByteMarkerHelper specialized instance of PBWireByteMarkerHelper
+     *   used when reading delimiters.
+     */
+    public <T> PBStreamReader(PBWireByteMarkerHelper pbWireByteMarkerHelper) {
+        
+        finishedReadingStream = false;
+        
+        gpbWireByteMarkerHelper = pbWireByteMarkerHelper;
+    }
+    
     /**
      * Read until find the next startMarker and return the subsequent byteMarkerSize 
      * bytes in byteMarker.  
@@ -48,7 +81,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
     protected byte[] readUntilNextStartMarker(InputStream inStream, byte[] remnant, int bufferSize,
         byte startByte, byte[] byteMarker, int byteMarkerSize) throws IOException {
         
-        log.log(Level.INFO, "readNextStartMarker");
+        log.log(Level.INFO, "readUntilNextStartMarker");
         
         if ((byteMarker == null) || (byteMarker.length != byteMarkerSize)) {
             log.log(Level.SEVERE, "size of byteMarker must be equal to byteMarkerSize");
@@ -90,8 +123,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
             throw new IOException("stream has ended and we only read " + sum 
                 + " bytes but needed to find " + byteMarkerSize + " bytes for the byte marker");
         }
-        
-        
+
         // ---------  find  bytemarker in buffer ---------
         // this is the position of the start byte which precedes the byte marker
         int matchStartPos = -1;
@@ -151,9 +183,9 @@ public class PBStreamReader<T extends GeneratedMessage> {
      * Read instances of GeneratedMessage from the input stream and use the 
      * given builder to unmarshall the messages.
      * 
-     * @param inStream
-     * @param messageBuilder
-     * @return list of GeneratedMessage instances decoded and deserialized from input stream
+     * @param inStream input stream holding delimeters and encoded generated messages.
+     * @param messageBuilder protocol buffer message builder
+     * @return list of GeneratedMessage instances decoded and de-serialized from input stream
      * @throws IOException
      * @throws InstantiationException
      * @throws IllegalAccessException 
@@ -168,15 +200,15 @@ public class PBStreamReader<T extends GeneratedMessage> {
         int bufferSizeForMarkerReads = 256;
 
         byte[] remnant = null;
-        
+
         while (!finishedReadingStream || ((remnant != null) && (remnant.length > 0))) {
 
-            byte[] byteMarker = new byte[PBWireByteMarkerHelper.byteMarkerSize];
+            byte[] byteMarker = new byte[gpbWireByteMarkerHelper.getByteMarkerSize()];
 
             remnant = readUntilNextStartMarker(inStream, remnant, bufferSizeForMarkerReads, 
-                PBWireByteMarkerHelper.markerForStart, byteMarker, byteMarker.length);
+                gpbWireByteMarkerHelper.getMarkerForStart(), byteMarker, byteMarker.length);
 
-            int messageLength = PBWireByteMarkerHelper.bytesToInteger(byteMarker);
+            int messageLength = gpbWireByteMarkerHelper.bytesToInteger(byteMarker);
 
             log.log(Level.INFO, "reading an event of length = {0}", messageLength);
             

@@ -49,15 +49,13 @@ public class PBWireByteMarkerHelperTest extends TestCase {
     public void testBytesToInteger() {
         // initialized but empty byte marker returns zero
         
-        byte[] marker = new byte[PBWireByteMarkerHelper.delimiterSize - 1];
+        byte[] marker = new byte[PBWireByteMarkerHelper.getDelimiterSize() - 1];
         
         int sz = PBWireByteMarkerHelper.bytesToInteger(marker);
         
         assertTrue(sz == 0);
     }
     
-    /**
-     */
     @Test
     public void testCreateMessageByteMarker() {
         

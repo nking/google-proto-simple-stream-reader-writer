@@ -9,7 +9,6 @@ import java.util.logging.Logger;
  * A utility class to help write the delimiting byte markers for Google protocol buffer 
  * generated messages used with PBStreamReader.
  *
- *  
  * @author nichole
  */
 public class PBWireByteMarkerHelper {
@@ -17,7 +16,7 @@ public class PBWireByteMarkerHelper {
     /**
      * Web-socket friendly start byte marker for delimiter
      */
-    public static final byte markerForStart = (byte)0x80;
+    private static final byte markerForStart = (byte)0x80;
     
     // To follow up on complete compliance:
     //http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
@@ -28,15 +27,53 @@ public class PBWireByteMarkerHelper {
     //as was specified.
     
     /**
-     * Size of the message size containing portion of the delimeter
+     * Number of bytes holding a message size, where this number of bytes follows the
+     * byteMarker within a delimiter.
      */
-    public static final int byteMarkerSize = 4;
+    private static int byteMarkerSize = 4;
     
     /**
-     * The total size of a delimeter (used when marshalling/unmarshalling GeneratedMessages)
+     * The total number of bytes of a delimeter for a generated message 
+     * (used when marshalling/unmarshalling).
      */
-    public static final int delimiterSize = byteMarkerSize + 1;
+    private static int delimiterSize = byteMarkerSize + 1;
 
+    /**
+     * Get the number of bytes holding a message size, where these bytes are within
+     * the delimiter byte array and follow the byte marker.
+     * 
+     * @return number of bytes holding a message size.
+     */
+    public static int getByteMarkerSize() {
+        return byteMarkerSize;
+    }
+    
+    /**
+     * Get the total number of bytes of a delimeter for a generated message.
+     * 
+     * @return the number of bytes in a delimiter
+     */
+    public static int getDelimiterSize() {
+        return delimiterSize;
+    }
+    
+    /**
+     * Get the byte marker used to identify the start of the delimiter.
+     * 
+     * @return byte marker used to identify the start of the delimiter
+     */
+    public static byte getMarkerForStart() {
+        return markerForStart;
+    }
+    
+    /**
+     * Estimate the total number of bytes that will be used in a stream for a list
+     * of messages - this includes delimeters.  This is useful to set the content-length in an HTTP response.
+     * 
+     * @param messages instances of GeneratedMessage
+     * @return total number of bytes needed for a list of generated messages.  
+     * The total includes the delimiters too.
+     */
     public static int estimateTotalContentLength(List<? extends GeneratedMessage> messages) {
 
         int sum = 0;
