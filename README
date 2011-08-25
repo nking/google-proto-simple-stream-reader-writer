@@ -45,6 +45,7 @@ Example read:
    Builder builder = EventPB.newBuilder();
    List<YourGoogleProtocolBufferMessages> messages = pbReader.read(inStream, builder);
  
+Also see examples in the test directory including one for async messages.
 
 Note, that the project's pom.xml includes a plugin to compile your .proto files, but you need
 to have the proto binary installed on your computer.
