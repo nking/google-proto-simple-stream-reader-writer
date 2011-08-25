@@ -61,7 +61,7 @@ public class PBStreamWriter {
             out.flush();
             
             Logger.getLogger(PBStreamWriter.class.getName()).log(
-                Level.INFO, "===> Wrote {0} bytes to stream + {1} bytes for delimeter",
+                Level.FINEST, " Wrote {0} bytes to stream + {1} bytes for delimeter",
                 new Object[]{
                     Integer.toString(message.getSerializedSize()),
                     Integer.toString(delimiter.length)

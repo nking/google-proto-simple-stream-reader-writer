@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +36,8 @@ public class PBStreamReader<T extends GeneratedMessage> {
 
     protected final PBWireByteMarkerHelper gpbWireByteMarkerHelper;
 
+    protected ReadWriteLock lock = new ReentrantReadWriteLock();
+    
     /**
      * Default constructor.
      * 
@@ -41,9 +45,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
      */
     public <T> PBStreamReader() {
         
-        finishedReadingStream = false;
-        
-        gpbWireByteMarkerHelper = new PBWireByteMarkerHelper();
+        gpbWireByteMarkerHelper = new PBWireByteMarkerHelper();        
     }
 
     /**
@@ -55,10 +57,31 @@ public class PBStreamReader<T extends GeneratedMessage> {
      */
     public <T> PBStreamReader(PBWireByteMarkerHelper pbWireByteMarkerHelper) {
         
-        finishedReadingStream = false;
-        
         gpbWireByteMarkerHelper = pbWireByteMarkerHelper;
     }
+    
+    protected void setFinishedReadingStream(boolean finished) {
+        try {
+            lock.writeLock().lock();
+            
+            finishedReadingStream = finished;
+                
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+    
+    protected boolean getFinishedReadingStream() {
+        try {
+            lock.readLock().lock();
+            
+            return finishedReadingStream;
+                
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+    
     
     /**
      * Read until find the next startMarker and return the subsequent byteMarkerSize 
@@ -81,7 +104,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
     protected byte[] readUntilNextStartMarker(InputStream inStream, byte[] remnant, int bufferSize,
         byte startByte, byte[] byteMarker, int byteMarkerSize) throws IOException {
         
-        log.log(Level.INFO, "readUntilNextStartMarker");
+        log.log(Level.FINEST, "readUntilNextStartMarker");
         
         if ((byteMarker == null) || (byteMarker.length != byteMarkerSize)) {
             log.log(Level.SEVERE, "size of byteMarker must be equal to byteMarkerSize");
@@ -105,7 +128,6 @@ public class PBStreamReader<T extends GeneratedMessage> {
             System.arraycopy(remnant, 0, buffer, 0, sum);
             remnant = null;
         } else {
-            log.log(Level.FINE, "reading stream ");
             buffer = new byte[bufferSize];
         }
         while ((sum < bufferSize) && (nRead != -1)) {
@@ -114,10 +136,10 @@ public class PBStreamReader<T extends GeneratedMessage> {
                 sum += nRead;
         }  
         if (nRead == -1) {
-            finishedReadingStream = true;
-            log.log(Level.INFO, "end of stream");
+            setFinishedReadingStream(true);
+            log.log(Level.FINEST, "end of stream");
         } else {
-            log.log(Level.FINE, "read {0} bytes from remnant and input stream", sum);           
+            log.log(Level.FINEST, "read {0} bytes from remnant and input stream", sum);           
         }
         if ((sum > 0) && (sum < byteMarkerSize)) {
             throw new IOException("stream has ended and we only read " + sum 
@@ -166,7 +188,6 @@ public class PBStreamReader<T extends GeneratedMessage> {
         if (sum > 0) {
             int start = (bufferTrimPos < sum) ? bufferTrimPos : sum;
             // -- store trailing bytes in remnant
-            log.log(Level.INFO, "writing to remnant");
             if (remnant != null) {
                 byte[] remn = new byte[remnant.length + sum];
                 System.arraycopy(remnant, 0, remn, 0, remnant.length);  // (Object src, int srcPos, Object dest, int destPos, int length)
@@ -178,6 +199,25 @@ public class PBStreamReader<T extends GeneratedMessage> {
         }
         return remnant;
     }
+
+
+    /**
+     * Read instances of GeneratedMessage from the input stream, sending each message
+     * parsed from the stream via the callback.
+     * 
+     * @param inStream input stream holding delimeters and encoded generated messages.
+     * @param messageBuilder protocol buffer message builder to deserialize message.
+     * @param callback 
+     * @throws IOException
+     * @throws InstantiationException
+     * @throws IllegalAccessException 
+     */
+    public void read(InputStream inStream, final Builder messageBuilder, IPBStreamReaderCallback callback) 
+    throws IOException, InstantiationException, IllegalAccessException {
+        
+        readFromStream(inStream, messageBuilder, callback);
+    }
+
     
     /**
      * Read instances of GeneratedMessage from the input stream and use the 
@@ -192,6 +232,25 @@ public class PBStreamReader<T extends GeneratedMessage> {
      */
     public List<T> read(InputStream inStream, final Builder messageBuilder) 
     throws IOException, InstantiationException, IllegalAccessException {
+     
+        return readFromStream(inStream, messageBuilder, null);
+    }
+
+    
+    /**
+     * Read instances of GeneratedMessage from the input stream and use the 
+     * given builder to unmarshall the messages.
+     * 
+     * @param inStream input stream holding delimeters and encoded generated messages.
+     * @param messageBuilder protocol buffer message builder
+     * @param callback callback to handle each message as it's read from the stream.  can be null.
+     * @return list of GeneratedMessage instances decoded and de-serialized from input stream
+     * @throws IOException
+     * @throws InstantiationException
+     * @throws IllegalAccessException 
+     */
+    protected List<T> readFromStream(InputStream inStream, final Builder messageBuilder, IPBStreamReaderCallback callback) 
+    throws IOException, InstantiationException, IllegalAccessException {
         
         log.log(Level.INFO, "read");
         
@@ -201,7 +260,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
 
         byte[] remnant = null;
 
-        while (!finishedReadingStream || ((remnant != null) && (remnant.length > 0))) {
+        while (!getFinishedReadingStream() || ((remnant != null) && (remnant.length > 0))) {
 
             byte[] byteMarker = new byte[gpbWireByteMarkerHelper.getByteMarkerSize()];
 
@@ -210,10 +269,10 @@ public class PBStreamReader<T extends GeneratedMessage> {
 
             int messageLength = gpbWireByteMarkerHelper.bytesToInteger(byteMarker);
 
-            log.log(Level.INFO, "reading an event of length = {0}", messageLength);
+            log.log(Level.FINEST, "reading an event of length = {0}", messageLength);
             
             if (messageLength == 0) {
-                finishedReadingStream = true;
+                setFinishedReadingStream(true);
                 continue;
             }
             
@@ -222,7 +281,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
                 byte[] bytes = new byte[bufferSizeForMarkerReads];
                 int nRead = inStream.read(bytes);
                 if (nRead == -1) {
-                    finishedReadingStream = true;
+                    setFinishedReadingStream(true);
                     continue;
                 }
                 int sz = remnant.length + nRead;
@@ -242,7 +301,12 @@ public class PBStreamReader<T extends GeneratedMessage> {
             
             T msg = (T) messageBuilder.build();
             log.log(Level.FINE, "read serialized message: {0}", new Object[]{msg.toString()});
-            results.add( msg );
+            
+            if (callback != null) {
+                callback.handleDeserializedMessage(msg);
+            } else {
+                results.add( msg );
+            }
             
             messageBuilder.clear();
             
@@ -254,7 +318,9 @@ public class PBStreamReader<T extends GeneratedMessage> {
             }
         }
 
-        log.log(Level.INFO, "read {0} results", new Object[]{ Integer.toString(results.size())});
+        if (callback == null) {
+            log.log(Level.FINE, "read {0} results", new Object[]{ Integer.toString(results.size())});
+        }
         
         return results;
     }

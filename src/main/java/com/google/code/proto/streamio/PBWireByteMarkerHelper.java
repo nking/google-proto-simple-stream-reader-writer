@@ -83,7 +83,7 @@ public class PBWireByteMarkerHelper {
             int messageSize =  message.getSerializedSize();
             
             Logger.getLogger(PBWireByteMarkerHelper.class.getName())
-                .log(Level.INFO, "size of a message = {0}", Integer.toString(messageSize));
+                .log(Level.FINEST, "size of a message = {0}", Integer.toString(messageSize));
 
             sum += messageSize + delimiterSize ;
         }
