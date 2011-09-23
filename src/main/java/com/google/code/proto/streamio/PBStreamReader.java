@@ -34,28 +34,28 @@ public class PBStreamReader<T extends GeneratedMessage> {
     
     protected Logger log = Logger.getLogger(this.getClass().getName());
 
-    protected final PBWireByteMarkerHelper gpbWireByteMarkerHelper;
+    protected final IPBWireByteMarkerHelper gpbWireByteMarkerHelper;
 
     protected ReadWriteLock lock = new ReentrantReadWriteLock();
     
     /**
-     * Default constructor.
+     * Default constructor that uses the signed byte marker wire helper class.
      * 
      * @param <T> Parameterized type that is a specialization of GeneratedMessage
      */
     public <T> PBStreamReader() {
         
-        gpbWireByteMarkerHelper = new PBWireByteMarkerHelper();        
+        gpbWireByteMarkerHelper = new PBWireSignedByteMarkerHelper();        
     }
 
     /**
-     * Alternate constructor for use with a specialized PBWireByteMarkerHelper
+     * Alternate constructor for use with a specialized IPBWireByteMarkerHelper
      * 
      * @param <T> Parameterized type that is a specialization of GeneratedMessage
-     * @param pbWireByteMarkerHelper specialized instance of PBWireByteMarkerHelper
+     * @param pbWireByteMarkerHelper implementation of IPBWireByteMarkerHelper
      *   used when reading delimiters.
      */
-    public <T> PBStreamReader(PBWireByteMarkerHelper pbWireByteMarkerHelper) {
+    public <T> PBStreamReader(IPBWireByteMarkerHelper pbWireByteMarkerHelper) {
         
         gpbWireByteMarkerHelper = pbWireByteMarkerHelper;
     }

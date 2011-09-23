@@ -1,6 +1,9 @@
 
 A simple library to read and write Protocol Buffer messages to input and output streams.
 
+The binary delimiters are signed, so can be read with clients that can only parse strings
+and not unsigned binary data.
+
 Example write:
 
     @Override
@@ -39,7 +42,7 @@ Example write:
     }
 
 
-Example read:
+Example read from Java client:
 
    PBStreamReader<YourGoogleProtocolBufferMessages> pbReader = new PBStreamReader();
    Builder builder = EventPB.newBuilder();
@@ -53,3 +56,5 @@ http://code.google.com/apis/protocolbuffers/
 An example of a .proto file and the generated java file is in the test directory of the source code.
 http://code.google.com/p/google-proto-simple-stream-reader-writer/source/browse/src/#src%2Ftest%2Fjava%2Fcom%2Fgoogle%2Fcode%2Fproto%2Fmodel
 
+Example read from Javascript client:
+   see files in javascript directory
