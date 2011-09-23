@@ -96,7 +96,7 @@ function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCall
 * 
 * Function arguments:
 * 
-* @param binaryStringArray is the binary response text of streamed google protocol buffer messages
+* @param binaryString is the binary response text of streamed google protocol buffer messages
 * 
 * @param createPROTOMessage is the handle to a function which creates an instance of 
 * the gpb generated message. 
@@ -114,8 +114,8 @@ function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCall
 *           oEl.innerHTML = oEl.innerHTML + eventPB.toString();
 *        }
  */
-function readMessagesFromBinaryStringArray(binaryStringArray, createPROTOMessage, perMessageCallback) {
-    readMessagesFromBinaryStringArrayIteratively(0, binaryStringArray, createPROTOMessage, perMessageCallback);
+function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback) {
+    readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback);
 }
 
 
@@ -255,18 +255,18 @@ function readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROT
     }
 }
 
-function readMessagesFromBinaryStringArrayIteratively(startOffset, binaryStringArray, createPROTOMessage, perMessageCallback) {
+function readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback) {
     
-    //console.log("readMessagesFromBinaryStringArrayIteratively");
+    //console.log("readMessagesFromBinaryStringIteratively");
     
-    if (startOffset >= binaryStringArray.length) {
+    if (startOffset >= binaryString.length) {
         return;
     }
 
     var byteMarkerSize = 5;
 
     // read startOffset, startOffset + byteMarkerSize from byteMarkerInt8Array
-    var msgLength = readByteMarkerStringIntoInt32(binaryStringArray, startOffset, startOffset + byteMarkerSize);
+    var msgLength = readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
         
@@ -275,43 +275,43 @@ function readMessagesFromBinaryStringArrayIteratively(startOffset, binaryStringA
         startOffset += byteMarkerSize;
         var stopOffset = startOffset + msgLength;
         
-        readMessageFromBinaryString(binaryStringArray, startOffset, stopOffset, decodedmsg);
+        readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedmsg);
             
         perMessageCallback(decodedmsg);
         
         startOffset+= msgLength;
         
-        readMessagesFromBinaryStringArrayIteratively(startOffset, binaryStringArray, createPROTOMessage, perMessageCallback)
+        readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback)
     }
 }
 /* shouldn't be invoked outside of this script */
-function readByteMarkerStringIntoInt32(binaryStringArray, startOffset, stopOffset) {
+function readByteMarkerStringIntoInt32(binaryString, startOffset, stopOffset) {
     /* first is 0x00*/
     // byte markers are signed, holding values 0-127
-    var startByte = binaryStringArray.charCodeAt(startOffset);
+    var startByte = binaryString.charCodeAt(startOffset);
     startByte = startByte & 0x7f;
     if (startByte != 0){
         return undefined;
     }
-    return readByteMarkerString(binaryStringArray, startOffset + 1, stopOffset, 0, 0);
+    return readByteMarkerString(binaryString, startOffset + 1, stopOffset, 0, 0);
 }
-function readByteMarkerString(binaryStringArray, startOffset, stopOffset, total, index) {
+function readByteMarkerString(binaryString, startOffset, stopOffset, total, index) {
     if (startOffset >= stopOffset) {
         return total;
     }
-    var b = binaryStringArray.charCodeAt(startOffset);
+    var b = binaryString.charCodeAt(startOffset);
     total += (b & 0x7f) << (index*7);
     startOffset++;
     index++;
-    return readByteMarkerString(binaryStringArray, startOffset, stopOffset, total, index);
+    return readByteMarkerString(binaryString, startOffset, stopOffset, total, index);
 }
 /* shouldn't be invoked outside of this script */
-function readMessageFromBinaryString(binaryStringArray, startOffset, stopOffset, decodedMessage) {
+function readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedMessage) {
     /* for now, need to convert to array */
     var array = new Array(stopOffset - startOffset);
     var i = 0;
     for (var j = startOffset; j < stopOffset; j++) {
-        var c = binaryStringArray.charCodeAt(j);
+        var c = binaryString.charCodeAt(j);
         var b = c & 0xff;
         array[i] = b;
         i++;
