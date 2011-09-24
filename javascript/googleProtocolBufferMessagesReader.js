@@ -14,7 +14,8 @@
 * and pbj.js https://github.com/sirikata/protojs/blob/master/pbj.js
 * to deserialize the messages.
 * 
-* The readMarkerAndMessages method below expects a binary file or blob of the downloaded messages.
+* The readMarkerAndMessages method below are for downloads into a file or blob
+* when the File system API
 * 
 */
 
@@ -36,7 +37,9 @@ if ((typeof Blob !== 'undefined') && !Blob.prototype.slice) {
 }
 
 /** 
-* Read all gpb messages from a file or blob, passing each back to the caller in perMessageCallback.
+* Read all gpb messages from a file or blob from the File System API.
+* A function handle to create the PROTO message needs to be provided and a 
+* function handle to handle the deserialized message.
 * 
 * Function arguments:
 * 
@@ -59,12 +62,14 @@ if ((typeof Blob !== 'undefined') && !Blob.prototype.slice) {
 *        }
 */
 function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback) {
-    readMarkerAndMessagesIteratively(fileOrBlob, 0, createPROTOMessage, perMessageCallback);
+    _readMarkerAndMessagesIteratively(fileOrBlob, 0, createPROTOMessage, perMessageCallback);
 }
 
 /**
-* For browsers which do not implement FileSystem API nor BlobBuilder, but do implement Blob.
-* The given array is filled from the request binary response data written into an Int8Array.
+* For browsers which do not implement FileSystem API nor BlobBuilder, but do implement Blob,
+* this method accepts a signed Int8Array filled from the xmlhttprequest binary 'response'.
+* A function handle to create the PROTO message needs to be provided and a 
+* function handle to handle the deserialized message.
 * 
 * Function arguments:
 * 
@@ -87,12 +92,14 @@ function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallbac
 *        }
 */
 function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCallback) {
-    readMessagesFromInt8ArrayIteratively(0, int8Array, createPROTOMessage, perMessageCallback);
+    _readMessagesFromInt8ArrayIteratively(0, int8Array, createPROTOMessage, perMessageCallback);
 }
 
 /**
-* For browsers which do not implement FileSystem API nor BlobBuilder, nor Blob, but does
-* implement XMLHttpRequest. This binary string array is the binary response text.
+* For browsers which do not implement FileSystem API nor BlobBuilder, nor Blob, this
+* method accepts the binary string responseText from an xmlhttprequest.
+* A function handle to create the PROTO message needs to be provided and a 
+* function handle to handle the deserialized message.
 * 
 * Function arguments:
 * 
@@ -115,7 +122,7 @@ function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCall
 *        }
  */
 function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback) {
-    readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback);
+    _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback);
 }
 
 
@@ -130,7 +137,7 @@ function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessa
 /* Most users should use  readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback)
  * instead of this method
  */
-function readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOMessage, perMessageCallback) {
+function _readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOMessage, perMessageCallback) {
 
     if (startOffset >= fileOrBlob.size) {
         return;
@@ -142,7 +149,7 @@ function readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOMe
 
     byteMarkerReader.onload = function(e) {
         var arrayBuffer = e.target.result;
-        readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback);
+        _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback);
     }
     byteMarkerReader.onerror = function(e) {
         //console.log('    error while reading event byte marker from fileOrBlob:', e);
@@ -156,44 +163,39 @@ function readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOMe
 
     byteMarkerReader.readAsArrayBuffer(byteMarkerBlob);
 }
-/* shouldn't be invoked outside of this script */
-function readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback) {
-    
+function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback) {
     var byteMarkerInt8Array = new Int8Array(arrayBuffer, 0, byteMarkerSize);
     
-    var msgLength = readByteMarkerIntoInt32(byteMarkerInt8Array, 0, byteMarkerSize);
+    var msgLength = _readByteMarkerIntoInt32(byteMarkerInt8Array, 0, byteMarkerSize);
     /*console.log('    eventLength:', eventLength);*/
                 
     if (msgLength) {
-        var eventBytesReader = new FileReader();
+        var msgBytesReader = new FileReader();
         var offset = startOffset + byteMarkerSize;
         var msgBlob = fileOrBlob.slice(offset, offset + msgLength);
 
-        eventBytesReader.onload = function(e) {
+        msgBytesReader.onload = function(e) {
             var arrayBuffer = e.target.result;
              
             var decodedmsg = createPROTOMessage();
             
             var msgArray = new Int8Array(arrayBuffer, 0, arrayBuffer.byteLength);
-            readMessageFromInt8Array(msgArray, 0, msgLength, decodedmsg);
+            _readMessageFromInt8Array(msgArray, 0, msgLength, decodedmsg);
             
             perMessageCallback(decodedmsg);
                                                 
             /* start a new read */
-            readMarkerAndMessagesIteratively(fileOrBlob, offset + msgLength, createPROTOMessage, perMessageCallback);
+            _readMarkerAndMessagesIteratively(fileOrBlob, offset + msgLength, createPROTOMessage, perMessageCallback);
         }
-        eventBytesReader.onerror = function(e) {
+        msgBytesReader.onerror = function(e) {
             //console.log('    error while reading event bytes from fileOrBlob: ', e);
             return;
         }
 
-        eventBytesReader.readAsArrayBuffer(msgBlob);
+        msgBytesReader.readAsArrayBuffer(msgBlob);
     }
 }
-
-/* shouldn't be invoked outside of this script */
-function readMessageFromInt8Array(msgInt8Array, startOffset, stopOffset, decodedMessage) {
-    /* for now, need to convert to array */
+function _readMessageFromInt8Array(msgInt8Array, startOffset, stopOffset, decodedMessage) {
     var array = new Array(stopOffset - startOffset);
     var i = 0;
     for (var j = startOffset; j < stopOffset; j++) {
@@ -203,16 +205,14 @@ function readMessageFromInt8Array(msgInt8Array, startOffset, stopOffset, decoded
     var stream = new PROTO.ByteArrayStream(array);
     decodedMessage.ParseFromStream(stream);
 }
-
-/* shouldn't be invoked outside of this script */
-function readByteMarkerIntoInt32(markerInt8Array, startOffset, stopOffset) {
+function _readByteMarkerIntoInt32(markerInt8Array, startOffset, stopOffset) {
     /* first is 0x00*/
     if (markerInt8Array[startOffset] != 0) {
         return undefined;
     }
-    return readByteMarker(markerInt8Array, startOffset + 1, stopOffset, 0, 0);
+    return _readByteMarker(markerInt8Array, startOffset + 1, stopOffset, 0, 0);
 }
-function readByteMarker(markerInt8Array, startOffset, stopOffset, total, index) {
+function _readByteMarker(markerInt8Array, startOffset, stopOffset, total, index) {
     if (startOffset >= stopOffset) {
         return total;
     }
@@ -221,13 +221,10 @@ function readByteMarker(markerInt8Array, startOffset, stopOffset, total, index) 
     total += (b & 0x7f) << (index*7);
     startOffset++;
     index++;
-    return readByteMarker(markerInt8Array, startOffset, stopOffset, total, index);
+    return _readByteMarker(markerInt8Array, startOffset, stopOffset, total, index);
 }
-
-
-function readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROTOMessage, perMessageCallback) {
-    
-    //console.log("readEventsFromIntArraysIteratively");
+function _readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROTOMessage, perMessageCallback) {
+    //console.log("_readMessagesFromInt8ArrayIteratively");
     
     if (startOffset >= int8Array.byteLength) {
         return;
@@ -236,7 +233,7 @@ function readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROT
     var byteMarkerSize = 5;
 
     // read startOffset, startOffset + byteMarkerSize from byteMarkerInt8Array
-    var msgLength = readByteMarkerIntoInt32(int8Array, startOffset, startOffset + byteMarkerSize);
+    var msgLength = _readByteMarkerIntoInt32(int8Array, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
         
@@ -245,19 +242,17 @@ function readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROT
         startOffset += byteMarkerSize;
         var stopOffset = startOffset + msgLength;
         
-        readMessageFromInt8Array(int8Array, startOffset, stopOffset, decodedmsg);
+        _readMessageFromInt8Array(int8Array, startOffset, stopOffset, decodedmsg);
             
         perMessageCallback(decodedmsg);
         
         startOffset+= msgLength;
         
-        readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROTOMessage, perMessageCallback)
+        _readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROTOMessage, perMessageCallback)
     }
 }
-
-function readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback) {
-    
-    //console.log("readMessagesFromBinaryStringIteratively");
+function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback) {
+    //console.log("_readMessagesFromBinaryStringIteratively");
     
     if (startOffset >= binaryString.length) {
         return;
@@ -266,7 +261,7 @@ function readMessagesFromBinaryStringIteratively(startOffset, binaryString, crea
     var byteMarkerSize = 5;
 
     // read startOffset, startOffset + byteMarkerSize from byteMarkerInt8Array
-    var msgLength = readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
+    var msgLength = _readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
         
@@ -275,17 +270,16 @@ function readMessagesFromBinaryStringIteratively(startOffset, binaryString, crea
         startOffset += byteMarkerSize;
         var stopOffset = startOffset + msgLength;
         
-        readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedmsg);
+        _readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedmsg);
             
         perMessageCallback(decodedmsg);
         
         startOffset+= msgLength;
         
-        readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback)
+        _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback)
     }
 }
-/* shouldn't be invoked outside of this script */
-function readByteMarkerStringIntoInt32(binaryString, startOffset, stopOffset) {
+function _readByteMarkerStringIntoInt32(binaryString, startOffset, stopOffset) {
     /* first is 0x00*/
     // byte markers are signed, holding values 0-127
     var startByte = binaryString.charCodeAt(startOffset);
@@ -293,9 +287,9 @@ function readByteMarkerStringIntoInt32(binaryString, startOffset, stopOffset) {
     if (startByte != 0){
         return undefined;
     }
-    return readByteMarkerString(binaryString, startOffset + 1, stopOffset, 0, 0);
+    return _readByteMarkerString(binaryString, startOffset + 1, stopOffset, 0, 0);
 }
-function readByteMarkerString(binaryString, startOffset, stopOffset, total, index) {
+function _readByteMarkerString(binaryString, startOffset, stopOffset, total, index) {
     if (startOffset >= stopOffset) {
         return total;
     }
@@ -303,11 +297,9 @@ function readByteMarkerString(binaryString, startOffset, stopOffset, total, inde
     total += (b & 0x7f) << (index*7);
     startOffset++;
     index++;
-    return readByteMarkerString(binaryString, startOffset, stopOffset, total, index);
+    return _readByteMarkerString(binaryString, startOffset, stopOffset, total, index);
 }
-/* shouldn't be invoked outside of this script */
-function readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedMessage) {
-    /* for now, need to convert to array */
+function _readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedMessage) {
     var array = new Array(stopOffset - startOffset);
     var i = 0;
     for (var j = startOffset; j < stopOffset; j++) {
