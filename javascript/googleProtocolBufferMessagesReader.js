@@ -1,5 +1,5 @@
 /* 
-* Client to parse google protocol buffer messages.
+* Functions to parse google protocol buffer messages.
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library
 * http://code.google.com/apis/protocolbuffers/
