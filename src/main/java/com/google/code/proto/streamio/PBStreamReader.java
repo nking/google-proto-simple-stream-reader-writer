@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 public class PBStreamReader<T extends GeneratedMessage> {
     
     protected boolean finishedReadingStream = false;
-    
+
     protected Logger log = Logger.getLogger(this.getClass().getName());
 
     protected final IPBWireByteMarkerHelper gpbWireByteMarkerHelper;
@@ -45,19 +45,26 @@ public class PBStreamReader<T extends GeneratedMessage> {
      */
     public <T> PBStreamReader() {
         
-        gpbWireByteMarkerHelper = new PBWireSignedByteMarkerHelper();        
+        gpbWireByteMarkerHelper = new PBWireUnsignedByteMarkerHelper();        
     }
 
     /**
      * Alternate constructor for use with a specialized IPBWireByteMarkerHelper
      * 
      * @param <T> Parameterized type that is a specialization of GeneratedMessage
-     * @param pbWireByteMarkerHelper implementation of IPBWireByteMarkerHelper
-     *   used when reading delimiters.
+     * @param byteOption option to choose signed bytes or unsigned bytes when writing to stream.  null results
+     *   in a default UNSIGNED.
      */
-    public <T> PBStreamReader(IPBWireByteMarkerHelper pbWireByteMarkerHelper) {
+    public <T> PBStreamReader(ByteOption byteOption) {
+                
+        if ((byteOption == null) || (byteOption.ordinal() == ByteOption.UNSIGNED.ordinal())) {
+            
+            gpbWireByteMarkerHelper = new PBWireUnsignedByteMarkerHelper();
         
-        gpbWireByteMarkerHelper = pbWireByteMarkerHelper;
+        } else {
+        
+            gpbWireByteMarkerHelper = new PBWireUnsignedByteMarkerHelper();
+        }
     }
     
     protected void setFinishedReadingStream(boolean finished) {
@@ -70,18 +77,17 @@ public class PBStreamReader<T extends GeneratedMessage> {
             lock.writeLock().unlock();
         }
     }
-    
+
     protected boolean getFinishedReadingStream() {
         try {
             lock.readLock().lock();
-            
+
             return finishedReadingStream;
-                
+
         } finally {
             lock.readLock().unlock();
         }
     }
-    
     
     /**
      * Read until find the next startMarker and return the subsequent byteMarkerSize 
@@ -321,7 +327,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
         if (callback == null) {
             log.log(Level.FINE, "read {0} results", new Object[]{ Integer.toString(results.size())});
         }
-        
+
         return results;
     }
  

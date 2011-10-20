@@ -109,7 +109,7 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
         
             int messageSize = message.getSerializedSize();
             
-            Logger.getLogger(PBWireByteMarkerHelper.class.getName()).log(Level.FINEST, "size of a message = {0}", Integer.toString(messageSize));
+            Logger.getLogger(PBWireSignedByteMarkerHelper.class.getName()).log(Level.FINEST, "size of a message = {0}", Integer.toString(messageSize));
             
             sum += messageSize + delimiterSize;
         }

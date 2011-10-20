@@ -1,10 +1,13 @@
 
-A simple library to read and write Protocol Buffer messages to input and output streams.
+A Java and Javascript library to read and write Google Protocol Buffer messages 
+to input and output streams using delimiters between messages to enable use in 
+streaming (and non-streaming) parsers.
 
-The binary delimiters are signed, so can be read with clients that can only parse strings
-and not unsigned binary data.
+You can choose to write and read the stream using signed or unsigned bytes - the 
+later is useful for a javascript client.
 
-Example write:
+
+Example Java write:
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -14,7 +17,7 @@ Example write:
         
         try {
                         
-            List<YourGoogleProtocolBufferMessages> messages = getGPBMessages(req);
+            List<ExampleMsg> messages = getGPBMessages(req);
 
             resp.setContentType("application/octet-stream");
                 
@@ -42,19 +45,54 @@ Example write:
     }
 
 
-Example read from Java client:
+Example Java read:
 
-   PBStreamReader<YourGoogleProtocolBufferMessages> pbReader = new PBStreamReader();
-   Builder builder = EventPB.newBuilder();
-   List<YourGoogleProtocolBufferMessages> messages = pbReader.read(inStream, builder);
- 
+   PBStreamReader<ExampleMsg> pbReader = new PBStreamReader();
+   Builder builder = ExampleMsg.newBuilder();
+   List<ExampleMsg> messages = pbReader.read(inStream, builder);
+
 Also see examples in the test directory including one for async messages.
 
-Note, that the project's pom.xml includes a plugin to compile your .proto files, but you need
-to have the proto binary installed on your computer.
-http://code.google.com/apis/protocolbuffers/
-An example of a .proto file and the generated java file is in the test directory of the source code.
-http://code.google.com/p/google-proto-simple-stream-reader-writer/source/browse/src/#src%2Ftest%2Fjava%2Fcom%2Fgoogle%2Fcode%2Fproto%2Fmodel
+Javadocs for this library:
+   http://google-proto-simple-stream-reader-writer.googlecode.com/git/apidocs/com/google/code/proto/streamio/package-summary.html
 
-Example read from Javascript client:
-   see files in javascript directory
+Javascript functions:
+  function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback, errorCallback);
+  function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCallback, errorCallback);
+  function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback, errorCallback);
+
+
+Detailed instructions in using Google Protocol Buffers beyond this library:
+   -- Download http://code.google.com/apis/protocolbuffers/ and install it on your computer.
+   -- Create a .proto file and compile it.  The Google tutorial has an example .proto file
+      and there's a simple one here included to demonstrate generating the source, compiling,
+      and usin it.
+      The example .proto file in this project is at:
+      http://code.google.com/p/google-proto-simple-stream-reader-writer/source/browse/src/#src%2Ftest%2Fjava%2Fcom%2Fgoogle%2Fcode%2Fproto%2Fmodel
+      You can use the maven plugin maven-protoc-plugin configured in the
+      pom.xml and the command 'mvn generate-sources' to compile the .proto file to a java class.
+      The compile plugin finds the generated java class and builds your GPB java binary.
+   -- Decide if you'll be sending messages to any clients which can only read ascii (0-127).
+      If you're using the javascript library, you'll be constrained to ascii, so choose
+      the default unsigned configurations for the PBStreamWriter and PBStreamReader.
+   -- Include this maven plugin in your pom.xml build dependencies.
+   -- Write your messages.
+      For any string fields, consider whether you need to transform the string for your client.
+      For an html client you may want to add
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+      and use StringEscapeUtils.escapeHtml4(str) to convert your non-ascii characters into html4 sgml entities.
+      Alternatively, you can use the junidecode library to transliterate characters into 7-bit ascii
+      (you will loose all accents)  http://sourceforge.net/projects/junidecode/files/
+   -- Write your servlets to use PBStreamWriter
+   -- Write your java clients to use PBStreamReader and consider using the callback option asynchronously.
+   -- If you're writing a javascript client:
+      -- Download https://github.com/sirikata/protojs and build it.
+      -- Compile your .proto file to a .proto.js file using the sirikata project.
+      -- Create your html javascript client by including the scripts .proto.js that you just compiled, 
+         googleProtocolBufferMessagesReader.js from this project which is in
+         http://code.google.com/p/google-proto-simple-stream-reader-writer/source/browse/javascript/googleProtocolBufferMessagesReader.js
+         and protobuf.js from the sirikita project, and pbj.js from the sirikata project
