@@ -62,9 +62,10 @@ if ((typeof Blob !== 'undefined') && !Blob.prototype.slice) {
 * @param errorCallback is a function that accepts a string message containing the error.
 * 
 */
+/*
 function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback, errorCallback) {
     _readMarkerAndMessagesIteratively(fileOrBlob, 0, createPROTOMessage, perMessageCallback, errorCallback);
-}
+}*/
 
 /**
 * For browsers which do not implement FileSystem API nor BlobBuilder, but do implement Blob,
@@ -136,6 +137,7 @@ function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessa
 /* Most users should use  readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback)
  * instead of this method
  */
+/*
 function _readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOMessage, perMessageCallback, errorCallback) {
     console.log("_readMarkerAndMessagesIteratively");
     if (fileOrBlob == undefined) {
@@ -165,7 +167,7 @@ function _readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOM
     var byteMarkerBlob = fileOrBlob.slice(startOffset, startOffset + byteMarkerSize);
 
     byteMarkerReader.readAsArrayBuffer(byteMarkerBlob);
-}
+}*/
 function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback) {
     
     if (arrayBuffer.byteLength == 0) {
@@ -182,11 +184,11 @@ function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, cre
         var msgBlob = fileOrBlob.slice(offset, offset + msgLength);
 
         msgBytesReader.onload = function(e) {
-            var arrayBuffer = e.target.result;
+            var arrBuffer = e.target.result;
              
             var decodedmsg = createPROTOMessage();
             
-            var msgArray = new Uint8Array(arrayBuffer, 0, arrayBuffer.byteLength);
+            var msgArray = new Uint8Array(arrBuffer, 0, arrBuffer.byteLength);
             _readMessageFromUint8Array(msgArray, 0, msgLength, decodedmsg);
             
             perMessageCallback(decodedmsg);
