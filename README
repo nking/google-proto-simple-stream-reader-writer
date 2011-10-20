@@ -6,6 +6,18 @@ streaming (and non-streaming) parsers.
 You can choose to write and read the stream using signed or unsigned bytes - the 
 later is useful for a javascript client.
 
+-----------------------------------------------------------------------------------
+To build:
+   mvn clean compile package
+the binary will ./target/gpb-stream-reader-writer-{version}.jar
+
+A demo server and client are provided in demo and a README is there with build and
+deploy instructions.  To build the demo:
+   cd demo
+   mvn clean compile package
+
+-----------------------------------------------------------------------------------
+Usage for gpb-stream-reader-writer:
 
 Example Java write:
 
@@ -57,8 +69,7 @@ Javadocs for this library:
    http://google-proto-simple-stream-reader-writer.googlecode.com/git/apidocs/com/google/code/proto/streamio/package-summary.html
 
 Javascript functions:
-  function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback, errorCallback);
-  function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCallback, errorCallback);
+  function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback, errorCallback);
   function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback, errorCallback);
 
 

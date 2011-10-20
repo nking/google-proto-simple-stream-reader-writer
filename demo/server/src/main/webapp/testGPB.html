@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <script type="text/javascript" src="/js/jquery-1.6.4.min.js"></script>
+        <link rel="stylesheet" href="stylesheets/qunit.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="/js/qunit.js"></script>
+        <script type="text/javascript" src="/js/protobuf.js"></script>
+        <script type="text/javascript" src="/js/pbj.js"></script>
+        <script type="text/javascript" src="/js/googleProtocolBufferMessagesReader.js"></script>
+        <script type="text/javascript" src="/js/examplemessage.proto.js"></script>
+        <script>
+            
+            function makeRequest(url, useArrayBuffer) {
+            
+                try {
+                    var xhr = new XMLHttpRequest();
+
+                    if ("withCredentials" in xhr) {
+                        console.log("setting xmlhttprequest");
+
+                        xhr.overrideMimeType('text/plain; charset=x-user-defined');
+
+                        var synchronous = false;
+                        xhr.open('GET', url, synchronous);
+                    } else if (typeof XDomainRequest != "undefined") {
+                        console.log("setting xmlhttprequest using XDomainRequest");
+
+                        xhr = new XDomainRequest();
+                        xhr.overrideMimeType('text/plain; charset=x-user-defined');
+                        xhr.open('GET', url);
+                    } else {
+                        console.log("ERROR: ajax configuration is wrong");
+                        return "";
+                    }
+                    if (useArrayBuffer){
+                        xhr.responseType = 'arraybuffer';
+                    }
+                    xhr.send();
+                    console.log(xhr.getAllResponseHeaders());
+                    return xhr.response;
+                } catch(e) {
+                    var retry = false;
+                    var msg = '';
+                    switch (e.code) {
+                        case XMLHttpRequest.NETWORK_ERR:
+                            msg = 'cannot connect to network';
+                            if (self.retryCount < self.maxRetryCount) {
+                                retry = true;
+                            }
+                            break;
+                        case XMLHttpRequest.SYNTAX_ERR:
+                        case XMLHttpRequest.NOT_SUPPORTED_ERR:
+                            msg = 'error in client request';
+                            break;
+                        case XMLHttpRequest.SECURITY_ERR:
+                            msg = "request method isn't valid"; 
+                            break;
+                        default:
+                            msg = 'Unknown Error';
+                            break;
+                    };
+                    console.log('ERROR: ' + msg);
+                    if (retry) {
+                        makeRequest(url);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+        
+            function readMessagesNoDelimiters(msgUint8Array, createPROTOMessages, successCallback) {
+                if (msgUint8Array == undefined) {
+                    console.log("msgUint8Array cannot be null")
+                    return;
+                }
+
+                var decodedmsgs = createPROTOMessages();
+                
+                var array = new Array(msgUint8Array.length);
+                var i = 0;
+                for (var j = 0; j < msgUint8Array.length; j++) {
+                    array[i] = msgUint8Array[j];
+                    i++;
+                }
+                var stream = new PROTO.ByteArrayStream(array);
+                decodedmsgs.ParseFromStream(stream);
+                
+                successCallback(decodedmsgs)
+            }
+           
+            var errorCallback = function(msg) {
+                console.log(msg);
+            };
+            
+            $(document).ready(function() {
+                
+                writeToElement.innerHTML = '';
+              
+                var url = "http://localhost:8080/gpb";
+               
+                module("get GPB messages (no delimiters)", {
+                    setup: function() {
+                    },
+                    teardown: function() {
+                    }
+                });
+                
+                test("Get GPB messages (no delimeters)", function() {
+                    
+                    expect( 2 );
+                    
+                    var response = makeRequest(url, true);
+
+                    var msgUint8Array = new Uint8Array(response);        
+                    
+                    ok( (msgUint8Array), "received a response");
+
+                    var successCallback = function renderMessages(messages) {
+                        writeToElement.innerHTML = messages;
+                        ok( (messages), "deserialized messages");                        
+                    };
+                    var createPROTOMessages = function createPROTOMessages() {
+                        return new com.climbwithyourfeet.proto.ExampleMessages;
+                    };
+            
+                    readMessagesNoDelimiters(msgUint8Array, createPROTOMessages, successCallback);
+                });
+             
+             
+                
+                module("get GPB messages (w/ delimiters)", {
+                    setup: function() {
+                    },
+                    teardown: function() {
+                    }
+                });
+                
+                test("Get GPB messages (w/ delimeters)", function() {
+                    
+                    writeToElement.innerHTML = '';
+                    
+                    expect( 3 );
+                    
+                    var response = makeRequest(url + "?useDelimiters=true", true);
+
+                    var msgUint8Array = new Uint8Array(response);        
+                    
+                    ok( (msgUint8Array), "received a response");
+
+                    var successCallback = function renderMessage(message) {
+                        writeToElement.innerHTML = writeToElement.innerHTML + message;                        
+                        ok( (message), "deserialized message");
+                    };
+                    var createPROTOMessage = function createPROTOMessage() {
+                        return new com.climbwithyourfeet.proto.ExampleMsg;
+                    };
+            
+                    readMessagesFromUint8Array(msgUint8Array, createPROTOMessage, successCallback);
+                });
+                
+                /*
+                module("get GPB messages 2 (w/ delimiters)", {
+                    setup: function() {
+                    },
+                    teardown: function() {
+                    }
+                });
+                
+                test("Get GPB messages 2 (w/ delimeters)", function() {
+                    
+                    writeToElement.innerHTML = '';
+                    
+                    expect( 3 );
+                    
+                    var bb = new BlobBuilder();
+                    bb.append(makeRequest(url + "?useDelimiters=true", true));
+
+                    var blob = bb.getBlob('application/octet-stream');
+        
+                    ok( (blob), "received a response");
+
+                    var successCallback = function renderMessage(message) {
+                        writeToElement.innerHTML = writeToElement.innerHTML + message;                        
+                        ok( (message), "deserialized message");
+                    };
+                    var createPROTOMessage = function createPROTOMessage() {
+                        return new com.climbwithyourfeet.proto.ExampleMsg;
+                    };
+                    var errorCallback = function(e) {
+                        writeToElement.innerHTML = e.message;                        
+                    };
+            
+                    readMarkerAndMessages(blob, createPROTOMessage, successCallback, errorCallback);
+
+                });
+                */
+                
+                module("get GPB messages 3 (w/ delimiters)", {
+                    setup: function() {
+                    },
+                    teardown: function() {
+                    }
+                });
+                
+                test("Get GPB messages 3 (w/ delimeters)", function() {
+                    
+                    writeToElement.innerHTML = '';
+                    
+                    expect( 3 );
+                    
+                    var response = makeRequest(url + "?useDelimiters=true", false);
+                    var responseText;
+                    try {
+                        responseText = response.data.responseText;
+                    } catch (e) {
+                        responseText = response;
+                    }
+                                        
+                    ok( (responseText), "received a response");
+
+                    var successCallback = function renderMessage(message) {
+                        writeToElement.innerHTML = writeToElement.innerHTML + message;                        
+                        ok( (message), "deserialized message");
+                    };
+                    var createPROTOMessage = function createPROTOMessage() {
+                        return new com.climbwithyourfeet.proto.ExampleMsg;
+                    };
+                    var errorCallback = function(e) {
+                        writeToElement.innerHTML = e.message;                        
+                    };
+            
+                    readMessagesFromBinaryString(responseText, createPROTOMessage, successCallback, errorCallback);
+
+                });
+                
+            });
+        </script>
+
+    </head>
+    <body>
+        <h1 id="qunit-header">QUnit test</h1>
+        <h2 id="qunit-banner"></h2>
+        <div id="qunit-testrunner-toolbar"></div>
+        <h2 id="qunit-userAgent"></h2>
+        <ol id="qunit-tests"></ol>
+        <div id="qunit-fixture">test markup, will be hidden</div>
+        <div id="output"></div>
+        <br/>
+        
+        <script>
+            writeToElement = document.querySelector('#output');
+            
+        </script>
+    </body>
+</html>

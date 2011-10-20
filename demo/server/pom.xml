@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.climbwithyourfeet.DemoGPB</groupId>
+    <artifactId>server</artifactId>
+    <version>0.1</version>
+    <packaging>war</packaging>
+    <name>DemoGPB :: server</name>
+    <organization>
+    </organization>
+    <description>web application to serve messages</description>
+    <developers>
+        <developer>
+            <name>Nichole King</name>
+        </developer>
+    </developers>
+
+    <repositories>
+        <repository>
+            <id>google-maven-repository</id>
+            <name>google-maven-repository</name>
+            <url>http://google-maven-repository.googlecode.com/svn/repository/</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <finalName>${project.groupId}-${project.artifactId}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${java.source.version}</source>
+                    <target>${java.target.version}</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.0.2</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <webResources>
+                        <!-- insert domain name into web.xml and app name into appengine-web.xml -->
+                        <resource>
+                            <directory>${project.basedir}/src/main/webapp</directory>
+                            <filtering>true</filtering>
+                            <includes>
+                                <include>**/web.xml</include>
+                            </includes>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <delete>
+                                    <fileset dir="." includes="**/datanucleus-enhancer*jar"/>
+                                    <fileset dir="." includes="**/asm*jar"/>
+                                    <fileset dir="." includes="**/jta-*jar"/>
+                                    <fileset dir="." includes="**/servlet-api*jar"/>
+                                    <fileset dir="." includes="**/jsp-api*jar"/>
+                                    <fileset dir="." includes="**/jstl*jar"/>
+                                    <fileset dir="." includes="**/standard*jar"/>
+                                    <fileset dir="." includes="**/maven-plugin-api*jar"/>
+                                    <!-- -->
+                                    <!-- <fileset dir="." includes="**/appengine-api-1.0-sdk-${appengine.api.version}.jar"/> -->
+                                    <!-- <fileset dir="." includes="**/appengine-remote-api-*jar"/> -->
+                                    <!-- <fileset dir="." includes="**/appengine-tools-api-*jar"/> -->
+                                    <fileset dir="." includes="**/appengine-api-stubs*jar"/>
+                                    <fileset dir="." includes="**/appengine-api-${appengine.api.version}.jar"/>
+                                    <fileset dir="." includes="**/appengine-testing*jar"/>
+                                 </delete>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>aspectj-maven-plugin</artifactId>
+                <version>1.3.1</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>test-compile</goal>
+                        </goals>
+                        <configuration>
+                            <source>1.6</source>
+                            <target>1.6</target>
+                            <meminitial>256m</meminitial>
+                            <maxmem>512m</maxmem>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.climbwithyourfeet.DemoGPB</groupId>
+            <artifactId>dataModel</artifactId>
+            <version>0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>2.4.0a</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.appengine</groupId>
+            <artifactId>appengine-api-1.0-sdk</artifactId>
+            <version>${appengine.api.version}</version>
+        </dependency>
+        <dependency>
+            <!-- needed for Task/Queue -->
+            <groupId>com.google.appengine</groupId>
+            <artifactId>appengine-api-labs</artifactId>
+            <version>${appengine.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.appengine</groupId>
+            <artifactId>appengine-api-stubs</artifactId>
+            <version>${appengine.api.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.appengine</groupId>
+            <artifactId>appengine-local-runtime</artifactId>
+            <version>${appengine.api.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.appengine.tools.development.testing</groupId>
+            <artifactId>appengine-testing</artifactId>
+            <version>${appengine.api.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <!-- 2.5 -->
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <!-- 2.1 -->
+            <version>2.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <!-- 1.2 -->
+            <version>1.1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>taglibs</groupId>
+            <artifactId>standard</artifactId>
+            <version>1.1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>1.6.10</version>
+        </dependency>
+        
+    </dependencies>
+
+    <properties>
+        <java.source.version>1.6</java.source.version>
+        <java.target.version>1.6</java.target.version>
+        <appengine.api.version>1.5.2</appengine.api.version>
+        <project.version>${project.version}</project.version>
+    </properties>
+</project>

@@ -1,0 +1,21 @@
+// Once this is in production:
+//    don't change the tag numbers of any existing fields.
+//    don't add or delete any required fields.
+//    don't delete optional or repeated fields.
+//    don't add new optional or repeated fields but you must use fresh tag numbers 
+//       (i.e. tag numbers that were never used in this protocol buffer, not even by deleted fields).
+
+package com.climbwithyourfeet.proto;
+
+option java_package = "com.climbwithyourfeet.proto";
+option java_outer_classname = "ExampleMessageProto";
+
+message ExampleMsg {
+  required string name = 1;
+  required string value = 2;
+  required int32 code = 3;
+}
+
+message ExampleMessages {
+    repeated ExampleMsg msg = 1;
+}

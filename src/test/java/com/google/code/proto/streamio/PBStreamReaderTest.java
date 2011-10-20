@@ -50,7 +50,6 @@ public class PBStreamReaderTest extends TestCase {
     @Test
     public void testReadUnsigned() throws Exception {
 
-        // test whether the message is encoded using unsigned bytes (hopefully true)
         String name1 = "a title with more than 128 characters to see if the string length decoded length from the preceding varint is only wrong in the javascript parser protobuf.js";
         String value1 = "a value";
         int code1 = 200;
