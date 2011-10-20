@@ -68,13 +68,13 @@ function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallbac
 
 /**
 * For browsers which do not implement FileSystem API nor BlobBuilder, but do implement Blob,
-* this method accepts a signed Int8Array filled from the xmlhttprequest binary 'response'.
+* this method accepts a signed Uint8Array filled from the xmlhttprequest binary 'response'.
 * A function handle to create the PROTO message needs to be provided and a 
 * function handle to handle the deserialized message.
 * 
 * Function arguments:
 * 
-* @param int8Array is an Int8Array of binary streamed google protocol buffer messages
+* @param uint8Array is a Uint8Array of binary streamed google protocol buffer messages
 * 
 * @param createPROTOMessage is the handle to a function which creates an instance of 
 * the gpb generated message. 
@@ -92,8 +92,8 @@ function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallbac
 *           oEl.innerHTML = oEl.innerHTML + eventPB.toString();
 *        }
 */
-function readMessagesFromInt8Array(int8Array, createPROTOMessage, perMessageCallback) {
-    _readMessagesFromInt8ArrayIteratively(0, int8Array, createPROTOMessage, perMessageCallback);
+function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback) {
+    _readMessagesFromUint8ArrayIteratively(0, uint8Array, createPROTOMessage, perMessageCallback);
 }
 
 /**
@@ -171,9 +171,9 @@ function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, cre
     if (arrayBuffer.byteLength == 0) {
         return;
     }
-    var byteMarkerInt8Array = new Int8Array(arrayBuffer, 0, byteMarkerSize);
+    var byteMarkerUint8Array = new Uint8Array(arrayBuffer, 0, byteMarkerSize);
     
-    var msgLength = _readByteMarkerIntoInt32(byteMarkerInt8Array, 0, byteMarkerSize);
+    var msgLength = _readByteMarkerIntoInt32(byteMarkerUint8Array, 0, byteMarkerSize);
     /*console.log('    eventLength:', eventLength);*/
                 
     if (msgLength) {
@@ -186,8 +186,8 @@ function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, cre
              
             var decodedmsg = createPROTOMessage();
             
-            var msgArray = new Int8Array(arrayBuffer, 0, arrayBuffer.byteLength);
-            _readMessageFromInt8Array(msgArray, 0, msgLength, decodedmsg);
+            var msgArray = new Uint8Array(arrayBuffer, 0, arrayBuffer.byteLength);
+            _readMessageFromUint8Array(msgArray, 0, msgLength, decodedmsg);
             
             perMessageCallback(decodedmsg);
                                                 
@@ -198,45 +198,45 @@ function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, cre
         msgBytesReader.readAsArrayBuffer(msgBlob);
     }
 }
-function _readMessageFromInt8Array(msgInt8Array, startOffset, stopOffset, decodedMessage) {
+function _readMessageFromUint8Array(msgUint8Array, startOffset, stopOffset, decodedMessage) {
     var array = new Array(stopOffset - startOffset);
     var i = 0;
     for (var j = startOffset; j < stopOffset; j++) {
-        array[i] = msgInt8Array[j];
+        array[i] = msgUint8Array[j];
         i++;
     }
     var stream = new PROTO.ByteArrayStream(array);
     decodedMessage.ParseFromStream(stream);
 }
-function _readByteMarkerIntoInt32(markerInt8Array, startOffset, stopOffset) {
+function _readByteMarkerIntoInt32(markerUint8Array, startOffset, stopOffset) {
     /* first is 0x00*/
-    if (markerInt8Array[startOffset] != 0) {
+    if (markerUint8Array[startOffset] != 0) {
         return undefined;
     }
-    return _readByteMarker(markerInt8Array, startOffset + 1, stopOffset, 0, 0);
+    return _readByteMarker(markerUint8Array, startOffset + 1, stopOffset, 0, 0);
 }
-function _readByteMarker(markerInt8Array, startOffset, stopOffset, total, index) {
+function _readByteMarker(markerUint8Array, startOffset, stopOffset, total, index) {
     if (startOffset >= stopOffset) {
         return total;
     }
     //byte markers are signed, hold values 0-127
-    var b = markerInt8Array[startOffset];
+    var b = markerUint8Array[startOffset];
     total += (b & 0x7f) << (index*7);
     startOffset++;
     index++;
-    return _readByteMarker(markerInt8Array, startOffset, stopOffset, total, index);
+    return _readByteMarker(markerUint8Array, startOffset, stopOffset, total, index);
 }
-function _readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROTOMessage, perMessageCallback) {
-    //console.log("_readMessagesFromInt8ArrayIteratively");
+function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback) {
+    //console.log("_readMessagesFromUint8ArrayIteratively");
     
-    if (startOffset >= int8Array.byteLength) {
+    if (startOffset >= uint8Array.byteLength) {
         return;
     }
 
     var byteMarkerSize = 5;
 
-    // read startOffset, startOffset + byteMarkerSize from byteMarkerInt8Array
-    var msgLength = _readByteMarkerIntoInt32(int8Array, startOffset, startOffset + byteMarkerSize);
+    // read startOffset, startOffset + byteMarkerSize from byteMarkerUint8Array
+    var msgLength = _readByteMarkerIntoInt32(uint8Array, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
         
@@ -245,13 +245,13 @@ function _readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPRO
         startOffset += byteMarkerSize;
         var stopOffset = startOffset + msgLength;
         
-        _readMessageFromInt8Array(int8Array, startOffset, stopOffset, decodedmsg);
+        _readMessageFromUint8Array(uint8Array, startOffset, stopOffset, decodedmsg);
             
         perMessageCallback(decodedmsg);
         
         startOffset+= msgLength;
         
-        _readMessagesFromInt8ArrayIteratively(startOffset, int8Array, createPROTOMessage, perMessageCallback)
+        _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback)
     }
 }
 function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback) {
@@ -263,7 +263,7 @@ function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, cre
 
     var byteMarkerSize = 5;
 
-    // read startOffset, startOffset + byteMarkerSize from byteMarkerInt8Array
+    // read startOffset, startOffset + byteMarkerSize from byteMarkerUint8Array
     var msgLength = _readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
