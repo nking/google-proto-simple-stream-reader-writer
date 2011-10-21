@@ -5,6 +5,10 @@
         <servlet-name>GPBServlet</servlet-name>
         <servlet-class>com.climbwithyourfeet.services.serveGPB.GPBServlet</servlet-class>
     </servlet>
+
+    <welcome-file-list>
+        <welcome-file>testGPB.html</welcome-file>
+    </welcome-file-list>
    
     <servlet-mapping>
         <servlet-name>GPBServlet</servlet-name>

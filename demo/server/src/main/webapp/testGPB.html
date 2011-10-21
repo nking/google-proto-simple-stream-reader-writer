@@ -140,34 +140,43 @@
                     
                     writeToElement.innerHTML = '';
                     
-                    expect( 3 );
+                    /* test that browser supports TypedArrays */
+                    var testTypedArraySupport = new Uint8Array(1);
+                    if (testTypedArraySupport == undefined) {
+                        
+                        expect(0);
+                        writeToElement.innerHTML = 'no support for Typed Arrays, so not running test';
                     
-                    var response = makeRequest(url + "?useDelimiters=true", true);
+                    } else {
+                        expect( 3 );
 
-                    var msgUint8Array = new Uint8Array(response);        
-                    
-                    ok( (msgUint8Array), "received a response");
+                        var response = makeRequest(url + "?useDelimiters=true", true);
 
-                    var successCallback = function renderMessage(message) {
-                        writeToElement.innerHTML = writeToElement.innerHTML + message;                        
-                        ok( (message), "deserialized message");
-                    };
-                    var createPROTOMessage = function createPROTOMessage() {
-                        return new com.climbwithyourfeet.proto.ExampleMsg;
-                    };
-            
-                    readMessagesFromUint8Array(msgUint8Array, createPROTOMessage, successCallback);
+                        var msgUint8Array = new Uint8Array(response);        
+
+                        ok( (msgUint8Array), "received a response");
+
+                        var successCallback = function renderMessage(message) {
+                            writeToElement.innerHTML = writeToElement.innerHTML + message;                        
+                            ok( (message), "deserialized message");
+                        };
+                        var createPROTOMessage = function createPROTOMessage() {
+                            return new com.climbwithyourfeet.proto.ExampleMsg;
+                        };
+
+                        readMessagesFromUint8Array(msgUint8Array, createPROTOMessage, successCallback, errorCallback);
+                    }
                 });
                 
                 /*
-                module("get GPB messages 2 (w/ delimiters)", {
+                module("get GPB messages test 2 (w/ delimiters)", {
                     setup: function() {
                     },
                     teardown: function() {
                     }
                 });
                 
-                test("Get GPB messages 2 (w/ delimeters)", function() {
+                test("Get GPB messages test 2 (w/ delimeters)", function() {
                     
                     writeToElement.innerHTML = '';
                     
@@ -196,14 +205,14 @@
                 });
                 */
                 
-                module("get GPB messages 3 (w/ delimiters)", {
+                module("get GPB messages test 3 (w/ delimiters)", {
                     setup: function() {
                     },
                     teardown: function() {
                     }
                 });
                 
-                test("Get GPB messages 3 (w/ delimeters)", function() {
+                test("Get GPB messages test 3 (w/ delimeters)", function() {
                     
                     writeToElement.innerHTML = '';
                     
@@ -239,7 +248,7 @@
 
     </head>
     <body>
-        <h1 id="qunit-header">QUnit test</h1>
+        <h1 id="qunit-header">QUnit test for Javascript Google Protocol Buffer libraries</h1>
         <h2 id="qunit-banner"></h2>
         <div id="qunit-testrunner-toolbar"></div>
         <h2 id="qunit-userAgent"></h2>

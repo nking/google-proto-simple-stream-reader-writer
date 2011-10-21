@@ -16,7 +16,7 @@
 * to deserialize the messages.
 * 
 */
-
+/*
 self.requestFileSystemSync =  self.webkitRequestFileSystemSync || self.requestFileSystemSync;
 self.BlobBuilder = self.WebKitBlobBuilder || self.MozBlobBuilder || self.BlobBuilder;
 if ((typeof File !== 'undefined') && !File.prototype.slice) {
@@ -33,7 +33,7 @@ if ((typeof Blob !== 'undefined') && !Blob.prototype.slice) {
         Blob.prototype.slice = Blob.prototype.mozSlice;
     }
 }
-
+*/
 /** 
 * Read all gpb messages from a file or blob from the File System API.
 * A function handle to create the PROTO message needs to be provided and a 
@@ -68,17 +68,18 @@ function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallbac
 }*/
 
 /**
-* For browsers which do not implement FileSystem API nor BlobBuilder, but do implement Blob,
-* this method accepts a signed Uint8Array filled from the xmlhttprequest binary 'response'.
+* For browsers which do not support FileSystem API nor BlobBuilder, but do support binary and
+* Typed Arrays, this method accepts a signed Uint8Array filled from the xmlhttprequest binary 'response'.
 * A function handle to create the PROTO message needs to be provided and a 
-* function handle to handle the deserialized message.
+* The deserialized messages are returned to perMessageCallback as each are parsed out of the
+* binary response.
 * 
 * Function arguments:
 * 
 * @param uint8Array is a Uint8Array of binary streamed google protocol buffer messages
 * 
 * @param createPROTOMessage is the handle to a function which creates an instance of 
-* the gpb generated message. 
+* the gpb generated message which is in your .proto.js created w/ sirikata library. 
 *    For Example, in calling code:
 *         this.createPROTOMessage = function createPROTOMessage() {
 *            return new climbwithyourfeet.EventPB;
@@ -89,20 +90,27 @@ function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallbac
 * that is an instance of  type protoMessageType.
 *    For Example, in calling code:
 *        this.perMessageCallback = function renderEvent(eventPB) {
-*           var oEl = document.getElementById("output");
-*           oEl.innerHTML = oEl.innerHTML + eventPB.toString();
+*           document.getElementById("output").innerHTML = eventPB.toString();
+*        }
+*        
+* @param errorCallback is the handle to a function that should accept a string error as argument.
+*    For Example, in calling code:
+*        this.errorCallback = function (errorMessage) {
+*            document.getElementById("output").innerHTML = errorMessage;
 *        }
 */
-function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback) {
-    _readMessagesFromUint8ArrayIteratively(0, uint8Array, createPROTOMessage, perMessageCallback);
+function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback, errorCallback) {
+    if (uint8Array == undefined) {
+        errorCallback('uint8Array cannot be null');
+    }
+    _readMessagesFromUint8ArrayIteratively(0, uint8Array, createPROTOMessage, perMessageCallback, errorCallback);
 }
 
 /**
-* For browsers which do not implement FileSystem API nor BlobBuilder, nor Blob, this
-* method accepts the binary string responseText from an xmlhttprequest.
-* A function handle to create the PROTO message needs to be provided and a 
-* function handle to handle the deserialized message.
-* 
+* For browsers which do not support FileSystem API nor BlobBuilder nor Typed Arrays,
+* this method accepts the binary string responseText from an xmlhttprequest.
+* The deserialized messages are returned to perMessageCallback as each are parsed out of the
+* binary response.
 * Function arguments:
 * 
 * @param binaryString is the binary response text of streamed google protocol buffer messages
@@ -119,12 +127,17 @@ function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCa
 * that is an instance of  type protoMessageType.
 *    For Example, in calling code:
 *        this.perMessageCallback = function renderEvent(eventPB) {
-*           var oEl = document.getElementById("output");
-*           oEl.innerHTML = oEl.innerHTML + eventPB.toString();
+*           document.getElementById("output").innerHTML = eventPB.toString();
+*        }
+*        
+* @param errorCallback is the handle to a function that should accept a string error as argument.
+*    For Example, in calling code:
+*        this.errorCallback = function (errorMessage) {
+*            document.getElementById("output").innerHTML = errorMessage;
 *        }
  */
-function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback) {
-    _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback);
+function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback, errorCallback) {
+    _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback, errorCallback);
 }
 
 /*
@@ -167,7 +180,7 @@ function _readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOM
     var byteMarkerBlob = fileOrBlob.slice(startOffset, startOffset + byteMarkerSize);
 
     byteMarkerReader.readAsArrayBuffer(byteMarkerBlob);
-}*/
+}
 function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback) {
     
     if (arrayBuffer.byteLength == 0) {
@@ -176,7 +189,6 @@ function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, cre
     var byteMarkerUint8Array = new Uint8Array(arrayBuffer, 0, byteMarkerSize);
     
     var msgLength = _readByteMarkerIntoInt32(byteMarkerUint8Array, 0, byteMarkerSize);
-    /*console.log('    eventLength:', eventLength);*/
                 
     if (msgLength) {
         var msgBytesReader = new FileReader();
@@ -193,51 +205,24 @@ function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, cre
             
             perMessageCallback(decodedmsg);
                                                 
-            /* start a new read */
             _readMarkerAndMessagesIteratively(fileOrBlob, offset + msgLength, createPROTOMessage, perMessageCallback);
         }
 
         msgBytesReader.readAsArrayBuffer(msgBlob);
     }
 }
-function _readMessageFromUint8Array(msgUint8Array, startOffset, stopOffset, decodedMessage) {
-    var array = new Array(stopOffset - startOffset);
-    var i = 0;
-    for (var j = startOffset; j < stopOffset; j++) {
-        array[i] = msgUint8Array[j];
-        i++;
-    }
-    var stream = new PROTO.ByteArrayStream(array);
-    decodedMessage.ParseFromStream(stream);
-}
-function _readByteMarkerIntoInt32(markerUint8Array, startOffset, stopOffset) {
-    /* first is 0x00*/
-    if (markerUint8Array[startOffset] != 0) {
-        return undefined;
-    }
-    return _readByteMarker(markerUint8Array, startOffset + 1, stopOffset, 0, 0);
-}
-function _readByteMarker(markerUint8Array, startOffset, stopOffset, total, index) {
-    if (startOffset >= stopOffset) {
-        return total;
-    }
-    //byte markers are signed, hold values 0-127
-    var b = markerUint8Array[startOffset];
-    total += (b & 0x7f) << (index*7);
-    startOffset++;
-    index++;
-    return _readByteMarker(markerUint8Array, startOffset, stopOffset, total, index);
-}
-function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback) {
-    //console.log("_readMessagesFromUint8ArrayIteratively");
-    
-    if (startOffset >= uint8Array.byteLength) {
+*/
+
+function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, errorCallback) {    
+    if (uint8Array == undefined) {
+        errorCallback('_readMessagesFromUint8ArrayIteratively: unint8Array cannot be null');
+        return;
+    } else if (startOffset >= uint8Array.byteLength) {
+        errorCallback('_readMessagesFromUint8ArrayIteratively: startOffset is out of bounds of uint8Array');
         return;
     }
-
     var byteMarkerSize = 5;
 
-    // read startOffset, startOffset + byteMarkerSize from byteMarkerUint8Array
     var msgLength = _readByteMarkerIntoInt32(uint8Array, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
@@ -253,19 +238,46 @@ function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createP
         
         startOffset+= msgLength;
         
-        _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback)
+        _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, errorCallback)
     }
 }
-function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback) {
-    //console.log("_readMessagesFromBinaryStringIteratively");
-    
-    if (startOffset >= binaryString.length) {
+function _readByteMarkerIntoInt32(markerUint8Array, startOffset, stopOffset) {
+    if (markerUint8Array[startOffset] != 0) {
+        return undefined;
+    }
+    return _readByteMarker(markerUint8Array, startOffset + 1, stopOffset, 0, 0);
+}
+function _readByteMarker(markerUint8Array, startOffset, stopOffset, total, index) {
+    if (startOffset >= stopOffset) {
+        return total;
+    }
+    var b = markerUint8Array[startOffset];
+    total += (b & 0x7f) << (index*7);
+    startOffset++;
+    index++;
+    return _readByteMarker(markerUint8Array, startOffset, stopOffset, total, index);
+}
+function _readMessageFromUint8Array(msgUint8Array, startOffset, stopOffset, decodedMessage) {
+    var array = new Array(stopOffset - startOffset);
+    var i = 0;
+    for (var j = startOffset; j < stopOffset; j++) {
+        array[i] = msgUint8Array[j];
+        i++;
+    }
+    var stream = new PROTO.ByteArrayStream(array);
+    decodedMessage.ParseFromStream(stream);
+}
+
+function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback, errorCallback) {
+    if (binaryString == undefined) {
+        errorCallback('_readMessagesFromBinaryStringIteratively: binaryString cannot be null');
+        return;
+    } else if (startOffset >= binaryString.length) {
         return;
     }
 
     var byteMarkerSize = 5;
 
-    // read startOffset, startOffset + byteMarkerSize from byteMarkerUint8Array
     var msgLength = _readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
@@ -281,12 +293,10 @@ function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, cre
         
         startOffset+= msgLength;
         
-        _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback)
+        _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback, errorCallback);
     }
 }
 function _readByteMarkerStringIntoInt32(binaryString, startOffset, stopOffset) {
-    /* first is 0x00*/
-    // byte markers are signed, holding values 0-127
     var startByte = binaryString.charCodeAt(startOffset);
     startByte = startByte & 0x7f;
     if (startByte != 0){
