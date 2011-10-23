@@ -217,8 +217,7 @@ function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createP
     if (uint8Array == undefined) {
         errorCallback('_readMessagesFromUint8ArrayIteratively: unint8Array cannot be null');
         return;
-    } else if (startOffset >= uint8Array.byteLength) {
-        errorCallback('_readMessagesFromUint8ArrayIteratively: startOffset is out of bounds of uint8Array');
+    } else if (startOffset >= (uint8Array.byteLength - 1)) {
         return;
     }
     var byteMarkerSize = 5;
@@ -272,16 +271,17 @@ function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, cre
     if (binaryString == undefined) {
         errorCallback('_readMessagesFromBinaryStringIteratively: binaryString cannot be null');
         return;
-    } else if (startOffset >= binaryString.length) {
+    } else if (startOffset >= (binaryString.length - 1)) {
+        console.log('off by one?');
         return;
     }
 
     var byteMarkerSize = 5;
-
+console.log('reading byte marker');;
     var msgLength = _readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
-        
+        console.log('reading message of size ' + msgLength);    
         var decodedmsg = createPROTOMessage();
         
         startOffset += byteMarkerSize;

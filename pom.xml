@@ -4,7 +4,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.google.code.google-proto-simple-reader-writer</groupId>
     <artifactId>gpb-stream-reader-writer</artifactId>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
     <packaging>jar</packaging>
     <name>Google Protocol Buffer Stream Reader and Writer</name>
     <description>A Java and Javascript library to read and write Google Protocol Buffer messages 
@@ -96,6 +96,25 @@ streaming (and non-streaming) parsers.
                     <docencoding>UTF-8</docencoding>
                     <show>public</show>
                 </configuration>
+            </plugin>
+             <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <copy todir="${project.build.directory}/classes">
+                                    <fileset dir="${project.basedir}/javascript"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -11,6 +11,8 @@
         <script type="text/javascript" src="/js/examplemessage.proto.js"></script>
         <script>
             
+            var url = "http://localhost:8080/gpb";
+            
             function makeRequest(url, useArrayBuffer) {
             
                 try {
@@ -38,7 +40,12 @@
                     }
                     xhr.send();
                     console.log(xhr.getAllResponseHeaders());
-                    return xhr.response;
+                    if (useArrayBuffer) {
+                        return xhr.response;
+                    } else {
+                        return xhr.responseText;
+                    }
+                    
                 } catch(e) {
                     var retry = false;
                     var msg = '';
@@ -96,9 +103,7 @@
             $(document).ready(function() {
                 
                 writeToElement.innerHTML = '';
-              
-                var url = "http://localhost:8080/gpb";
-               
+                             
                 module("get GPB messages (no delimiters)", {
                     setup: function() {
                     },

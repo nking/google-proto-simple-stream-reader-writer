@@ -33,11 +33,11 @@ public class GPBServlet extends HttpServlet {
    
     private List<String> sharedDomains = new ArrayList<String>();
 
-    private String name1 = "a title with more than 128 characters to track down a bug in another script that is no longer a bug, no longer a bug, no longer a bug";
-    private String value1 = "a value for this message";
+    private String name1 = "Wallaby";
+    private String value1 = "The Swamp Wallaby is found along the entire east coast of Australia.[wikipedia]";
     private int code1 = 200;
-    private String name2 = "a protocol message";
-    private String value2 = "";
+    private String name2 = "Wallaby";
+    private String value2 = "Any of various small or medium-sized kangaroos; often brightly colored.[Wordnet]";
     private int code2 = 201;
       
     private ExampleMessages messagesGPB = null;
