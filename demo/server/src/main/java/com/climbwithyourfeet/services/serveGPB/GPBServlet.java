@@ -33,8 +33,8 @@ public class GPBServlet extends HttpServlet {
    
     private List<String> sharedDomains = new ArrayList<String>();
 
-    private String name1 = "Wallaby";
-    private String value1 = "The Swamp Wallaby is found along the entire east coast of Australia.[wikipedia]";
+    private String name1 = "Wallaroo";
+    private String value1 = "A Wallaroo is any of three closely related species of moderately large macropod, intermediate in size between the kangaroos and the wallabies.[Wikipedia]";
     private int code1 = 200;
     private String name2 = "Wallaby";
     private String value2 = "Any of various small or medium-sized kangaroos; often brightly colored.[Wordnet]";

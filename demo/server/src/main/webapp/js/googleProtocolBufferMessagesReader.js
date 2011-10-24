@@ -272,16 +272,13 @@ function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, cre
         errorCallback('_readMessagesFromBinaryStringIteratively: binaryString cannot be null');
         return;
     } else if (startOffset >= (binaryString.length - 1)) {
-        console.log('off by one?');
         return;
     }
 
     var byteMarkerSize = 5;
-console.log('reading byte marker');;
     var msgLength = _readByteMarkerStringIntoInt32(binaryString, startOffset, startOffset + byteMarkerSize);
     
     if (msgLength) {
-        console.log('reading message of size ' + msgLength);    
         var decodedmsg = createPROTOMessage();
         
         startOffset += byteMarkerSize;

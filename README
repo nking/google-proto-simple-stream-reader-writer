@@ -1,10 +1,6 @@
-
 A Java and Javascript library to read and write Google Protocol Buffer messages 
-to input and output streams using delimiters between messages to enable use in 
-streaming (and non-streaming) parsers.
-
-You can choose to write and read the stream delimiters using signed or unsigned bytes - the 
-later is useful for a javascript client.
+to input and output streams using delimiters between messages to aid message-by-message 
+rendering.
 
 -----------------------------------------------------------------------------------
 To build:
