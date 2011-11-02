@@ -1,14 +1,14 @@
 Demo server w/ java and javascript clients using Google Protocol Buffers over http
 with and without the use of delimiters (delimiters aid message-by-message rendering).
 
-To build:
+(1) To build:
    mvn clean compile package
 
-Server is Google's appengine.  Download appengine at http://code.google.com/appengine/downloads.html
+(2) Deploy the webapp at demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
+    to your local development appengine 
+    Server is Google's appengine.  Download appengine at http://code.google.com/appengine/downloads.html
 
-Deploy the webapp at ${project.basedir}/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
-to your local development appengine 
+(3) Dial http://localhost:8080/testGB.html in your browser to run the unit test.  
 
-Load the test script (it's the welcome-file so will also load from localhost:8080)
-   http://localhost:8080/testGPB.html
+The unit test is testGPB.html and includes uses of how to use the javascript libraries.
 

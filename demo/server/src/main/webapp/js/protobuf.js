@@ -1446,7 +1446,7 @@ PROTO.Message = function(name, properties) {
                     this.ClearField(propname);
                     for (var i = 0; i < value.length; i++) {
                         this.values_[propname].push(
-                                prop.type().Convert(value[i]));
+                            prop.type().Convert(value[i]));
                     }
                 } else {
                     this.values_[propname] = prop.type().Convert(value);

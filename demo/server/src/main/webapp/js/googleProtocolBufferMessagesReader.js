@@ -1,5 +1,6 @@
 /* 
-* library to parse google protocol buffer messages.
+* library to parse google protocol buffer messages and pass them back as
+* each is deserialized.
 * 
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library
@@ -16,56 +17,6 @@
 * to deserialize the messages.
 * 
 */
-/*
-self.requestFileSystemSync =  self.webkitRequestFileSystemSync || self.requestFileSystemSync;
-self.BlobBuilder = self.WebKitBlobBuilder || self.MozBlobBuilder || self.BlobBuilder;
-if ((typeof File !== 'undefined') && !File.prototype.slice) {
-    if (File.prototype.webkitSlice) {
-        File.prototype.slice = File.prototype.webkitSlice;
-    } else if (File.prototype.mozSlice) {
-        File.prototype.slice = File.prototype.mozSlice;
-    }
-}
-if ((typeof Blob !== 'undefined') && !Blob.prototype.slice) {
-    if (Blob.prototype.webkitSlice) {
-        Blob.prototype.slice = Blob.prototype.webkitSlice;
-    } else if (File.prototype.mozSlice) {
-        Blob.prototype.slice = Blob.prototype.mozSlice;
-    }
-}
-*/
-/** 
-* Read all gpb messages from a file or blob from the File System API.
-* A function handle to create the PROTO message needs to be provided and a 
-* function handle to handle the deserialized message.
-* 
-* Function arguments:
-* 
-* @param fileOrBlob is file or blob of binary streamed google protocol buffer messages
-* 
-* @param createPROTOMessage is the handle to a function which creates an instance of 
-* the gpb generated message. 
-*    For Example, in calling code:
-*         this.createPROTOMessage = function createPROTOMessage() {
-*            return new climbwithyourfeet.EventPB;
-*        }
-* 
-* @param perMessageCallback is a function that will be used as each message is
-* parsed.  the perMessageCallback function should accept an argument
-* that is an instance of  type protoMessageType.
-*    For Example, in calling code:
-*        this.perMessageCallback = function renderEvent(eventPB) {
-*           var oEl = document.getElementById("output");
-*           oEl.innerHTML = oEl.innerHTML + eventPB.toString();
-*        }
-* 
-* @param errorCallback is a function that accepts a string message containing the error.
-* 
-*/
-/*
-function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback, errorCallback) {
-    _readMarkerAndMessagesIteratively(fileOrBlob, 0, createPROTOMessage, perMessageCallback, errorCallback);
-}*/
 
 /**
 * For browsers which do not support FileSystem API nor BlobBuilder, but do support binary and
@@ -85,25 +36,43 @@ function readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallbac
 *            return new climbwithyourfeet.EventPB;
 *        }
 *       
-* @param perMessageCallback is a function that will be used as each message is
-* parsed.  the perMessageCallback function should accept an argument
-* that is an instance of  type protoMessageType.
+* @param perMessageCallback is a function that will be used as each message is deserialized.
+* the perMessageCallback function should accept arguments 
+* an instance of type protoMessageType and an associative array useful for handling the result (can be null).
 *    For Example, in calling code:
-*        this.perMessageCallback = function renderEvent(eventPB) {
-*           document.getElementById("output").innerHTML = eventPB.toString();
+*        this.perMessageCallback = function renderEvent(gpb, dictionary) {
+*           if (dictionary['categorySelection'] == currentCategory) {
+*               document.getElementById("output").innerHTML = gpb.toString();
+*           }
 *        }
-*        
-* @param errorCallback is the handle to a function that should accept a string error as argument.
+* 
+* @param completedCallback is a function that will be used after all messages are deserialized.
+* the completedCallback function should accept an argument of an associative array which is
+* useful for handling the result (can be null). 
 *    For Example, in calling code:
-*        this.errorCallback = function (errorMessage) {
+*        this.completedCallback = function deserializationCompleted(dictionary) {
+*           if (dictionary['categorySelection'] == currentCategory) {
+*               renderRemainingEvents(dictionary['categorySelection']);
+*           }
+*        }
+* 
+* @param errorCallback is the handle to a function that should accept arguments
+* of a string error message and an associative array of information useful for handling the result (can be null).
+*    For Example, in calling code:
+*        this.errorCallback = function (errorMessage, dictionary) {
 *            document.getElementById("output").innerHTML = errorMessage;
 *        }
+*        
+* @param dictionary is an associative array that one can use to pass back pararameters
+*    in the callbacks.
+*    For Example, in calling code:
+*        var dictionary = {'categorySelection' : category};
 */
-function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback, errorCallback) {
+function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary) {
     if (uint8Array == undefined) {
-        errorCallback('uint8Array cannot be null');
+        errorCallback('uint8Array cannot be null', dictionary);
     }
-    _readMessagesFromUint8ArrayIteratively(0, uint8Array, createPROTOMessage, perMessageCallback, errorCallback);
+    _readMessagesFromUint8ArrayIteratively(0, uint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary);
 }
 
 /**
@@ -122,22 +91,41 @@ function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCa
 *            return new climbwithyourfeet.EventPB;
 *        }
 * 
-* @param perMessageCallback is a function that will be used as each message is
-* parsed.  the perMessageCallback function should accept an argument
-* that is an instance of  type protoMessageType.
+* @param perMessageCallback is a function that will be used as each message is deserialized.
+* the perMessageCallback function should accept arguments 
+* an instance of type protoMessageType and an associative array useful for handling the result (can be null).
 *    For Example, in calling code:
-*        this.perMessageCallback = function renderEvent(eventPB) {
-*           document.getElementById("output").innerHTML = eventPB.toString();
+*        this.perMessageCallback = function renderEvent(gpb, dictionary) {
+*           if (dictionary['categorySelection'] == currentCategory) {
+*               document.getElementById("output").innerHTML = gpb.toString();
+*           }
 *        }
-*        
-* @param errorCallback is the handle to a function that should accept a string error as argument.
+* 
+* @param completedCallback is a function that will be used after all messages are deserialized.
+* the completedCallback function should accept an argument of an associative array which is
+* useful for handling the result (can be null). 
 *    For Example, in calling code:
-*        this.errorCallback = function (errorMessage) {
+*        this.completedCallback = function deserializationCompleted(dictionary) {
+*           if (dictionary['categorySelection'] == currentCategory) {
+*               renderRemainingEvents(dictionary['categorySelection']);
+*           }
+*        }
+* 
+* @param errorCallback is the handle to a function that should accept arguments
+* of a string error message and an associative array of information useful for handling the result (can be null).
+*    For Example, in calling code:
+*        this.errorCallback = function (errorMessage, dictionary) {
 *            document.getElementById("output").innerHTML = errorMessage;
 *        }
- */
-function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback, errorCallback) {
-    _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback, errorCallback);
+*        
+* @param dictionary is an associative array that one can use to pass back pararameters
+*    in the callbacks.
+*    For Example, in calling code:
+*        var dictionary = {'categorySelection' : category};
+*
+*/
+function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary) {
+    _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary);
 }
 
 /*
@@ -147,77 +135,13 @@ function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessa
  *==============================================================================================
 */
 
-/* Most users should use  readMarkerAndMessages(fileOrBlob, createPROTOMessage, perMessageCallback)
- * instead of this method
- */
-/*
-function _readMarkerAndMessagesIteratively(fileOrBlob, startOffset, createPROTOMessage, perMessageCallback, errorCallback) {
-    console.log("_readMarkerAndMessagesIteratively");
-    if (fileOrBlob == undefined) {
-        errorCallback('fileOrBlob cannot be null');
-        return;
-    }
-    if (startOffset >= fileOrBlob.size) {
-        return;
-    }
 
-    var byteMarkerSize = 5;
-    
-    var byteMarkerReader = new FileReader();
-
-    byteMarkerReader.onload = function(e) {
-        var arrayBuffer = e.target.result;
-        _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback);
-    }
-    byteMarkerReader.onerror = function(e) {
-        errorCallback('error while reading byte marker from fileOrBlob:', e.message);
-        return;
-    }
-    byteMarkerReader.onabort = function(e) {
-        errorCallback('user stopped request:', e.message);
-        return;
-    }
-    var byteMarkerBlob = fileOrBlob.slice(startOffset, startOffset + byteMarkerSize);
-
-    byteMarkerReader.readAsArrayBuffer(byteMarkerBlob);
-}
-function _readMessages(fileOrBlob, arrayBuffer, startOffset, byteMarkerSize, createPROTOMessage, perMessageCallback) {
-    
-    if (arrayBuffer.byteLength == 0) {
-        return;
-    }
-    var byteMarkerUint8Array = new Uint8Array(arrayBuffer, 0, byteMarkerSize);
-    
-    var msgLength = _readByteMarkerIntoInt32(byteMarkerUint8Array, 0, byteMarkerSize);
-                
-    if (msgLength) {
-        var msgBytesReader = new FileReader();
-        var offset = startOffset + byteMarkerSize;
-        var msgBlob = fileOrBlob.slice(offset, offset + msgLength);
-
-        msgBytesReader.onload = function(e) {
-            var arrBuffer = e.target.result;
-             
-            var decodedmsg = createPROTOMessage();
-            
-            var msgArray = new Uint8Array(arrBuffer, 0, arrBuffer.byteLength);
-            _readMessageFromUint8Array(msgArray, 0, msgLength, decodedmsg);
-            
-            perMessageCallback(decodedmsg);
-                                                
-            _readMarkerAndMessagesIteratively(fileOrBlob, offset + msgLength, createPROTOMessage, perMessageCallback);
-        }
-
-        msgBytesReader.readAsArrayBuffer(msgBlob);
-    }
-}
-*/
-
-function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, errorCallback) {    
+function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary) {    
     if (uint8Array == undefined) {
-        errorCallback('_readMessagesFromUint8ArrayIteratively: unint8Array cannot be null');
+        errorCallback('_readMessagesFromUint8ArrayIteratively: unint8Array cannot be null', dictionary);
         return;
     } else if (startOffset >= (uint8Array.byteLength - 1)) {
+        completedCallback(dictionary);
         return;
     }
     var byteMarkerSize = 5;
@@ -233,11 +157,11 @@ function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createP
         
         _readMessageFromUint8Array(uint8Array, startOffset, stopOffset, decodedmsg);
             
-        perMessageCallback(decodedmsg);
+        perMessageCallback(decodedmsg, dictionary);
         
         startOffset+= msgLength;
         
-        _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, errorCallback)
+        _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary);
     }
 }
 function _readByteMarkerIntoInt32(markerUint8Array, startOffset, stopOffset) {
@@ -267,11 +191,12 @@ function _readMessageFromUint8Array(msgUint8Array, startOffset, stopOffset, deco
     decodedMessage.ParseFromStream(stream);
 }
 
-function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback, errorCallback) {
+function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary) {
     if (binaryString == undefined) {
-        errorCallback('_readMessagesFromBinaryStringIteratively: binaryString cannot be null');
+        errorCallback('_readMessagesFromBinaryStringIteratively: binaryString cannot be null', dictionary);
         return;
     } else if (startOffset >= (binaryString.length - 1)) {
+        completedCallback(dictionary);
         return;
     }
 
@@ -286,11 +211,11 @@ function _readMessagesFromBinaryStringIteratively(startOffset, binaryString, cre
         
         _readMessageFromBinaryString(binaryString, startOffset, stopOffset, decodedmsg);
             
-        perMessageCallback(decodedmsg);
+        perMessageCallback(decodedmsg, dictionary);
         
         startOffset+= msgLength;
         
-        _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback, errorCallback);
+        _readMessagesFromBinaryStringIteratively(startOffset, binaryString, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary);
     }
 }
 function _readByteMarkerStringIntoInt32(binaryString, startOffset, stopOffset) {

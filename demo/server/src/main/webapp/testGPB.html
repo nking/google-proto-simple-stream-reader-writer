@@ -13,6 +13,10 @@
             
             var url = "http://localhost:8080/gpb";
             
+            var maxRetryCount = 3;
+            var retryCount = 0;
+            
+            /* utility method to send the ajax request*/
             function makeRequest(url, useArrayBuffer) {
             
                 try {
@@ -32,14 +36,20 @@
                         xhr.overrideMimeType('text/plain; charset=x-user-defined');
                         xhr.open('GET', url);
                     } else {
-                        console.log("ERROR: ajax configuration is wrong");
-                        return "";
+                        xhr = getIEAjaxRequest();
+                        if (xhr == undefined) {
+                            /*console.log("ERROR: ajax configuration is wrong");*/
+                            return "";
+                        }
                     }
+
                     if (useArrayBuffer){
                         xhr.responseType = 'arraybuffer';
                     }
                     xhr.send();
-                    console.log(xhr.getAllResponseHeaders());
+                    
+                    /*console.log(xhr.getAllResponseHeaders());*/
+                    
                     if (useArrayBuffer) {
                         return xhr.response;
                     } else {
@@ -51,6 +61,7 @@
                     var msg = '';
                     switch (e.code) {
                         case XMLHttpRequest.NETWORK_ERR:
+                        case 101:
                             msg = 'cannot connect to network';
                             if (self.retryCount < self.maxRetryCount) {
                                 retry = true;
@@ -67,7 +78,7 @@
                             msg = 'Unknown Error';
                             break;
                     };
-                    console.log('ERROR: ' + msg);
+                    /*console.log('ERROR: ' + msg);*/
                     if (retry) {
                         makeRequest(url);
                     } else {
@@ -75,10 +86,23 @@
                     }
                 }
             }
+            function getIEAjaxRequest() {
+                var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"];
+                if (window.ActiveXObject){
+                    for (var i=0; i < activexmodes.length; i++){
+                        try {
+                            return new ActiveXObject(activexmodes[i])
+                        } catch(e){
+                        }
+                    }
+                } else {
+                    return null;
+                }
+            }
         
             function readMessagesNoDelimiters(msgUint8Array, createPROTOMessages, successCallback) {
                 if (msgUint8Array == undefined) {
-                    console.log("msgUint8Array cannot be null")
+                    /*console.log("msgUint8Array cannot be null")*/
                     return;
                 }
 
@@ -104,12 +128,7 @@
                 
                 writeToElement.innerHTML = '';
                              
-                module("get GPB messages (no delimiters)", {
-                    setup: function() {
-                    },
-                    teardown: function() {
-                    }
-                });
+                /*** =====================  TEST binary string response of Google Protocol Buffer messages(using only the protobuf.js and pb.js to parse response) ====***/
                 
                 test("Get GPB messages (no delimeters)", function() {
                     
@@ -134,95 +153,68 @@
              
              
                 
-                module("get GPB messages (w/ delimiters)", {
-                    setup: function() {
-                    },
-                    teardown: function() {
-                    }
-                });
+                /*** =====================  TEST binary array response of Google Protocol Buffer messages served w/ byte marker delimiters ====***/
                 
-                test("Get GPB messages (w/ delimeters)", function() {
+                test("Get GPB messages and use typed arrays (messages were served w/ delimiters)", function() {
                     
                     writeToElement.innerHTML = '';
                     
-                    /* test that browser supports TypedArrays */
+                    /* test that browser supports TypedArrays.  if not, skip this test */
                     var testTypedArraySupport = new Uint8Array(1);
                     if (testTypedArraySupport == undefined) {
                         
                         expect(0);
+                        
                         writeToElement.innerHTML = 'no support for Typed Arrays, so not running test';
                     
                     } else {
-                        expect( 3 );
+                        expect( 4 );
 
+                        /* send request to server that streams Google Protocol Buffer messages separated w/ delimiters
+                         * from this project */
                         var response = makeRequest(url + "?useDelimiters=true", true);
 
+                        /* package the response in a typed array if the browser supports it*/
                         var msgUint8Array = new Uint8Array(response);        
 
-                        ok( (msgUint8Array), "received a response");
+                        ok( (msgUint8Array), "received a response");  /* unit test asserting that the response != undefined*/
 
-                        var successCallback = function renderMessage(message) {
-                            writeToElement.innerHTML = writeToElement.innerHTML + message;                        
-                            ok( (message), "deserialized message");
+                        /* set up the call back functions*/
+                        var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
+                            /* dictionary holds parameters you may need to process the message */
+                            writeToElement.innerHTML = writeToElement.innerHTML + '<br/>' + gpbMessage;                        
+                            ok( (gpbMessage), "deserialized message");
+                            /* demo has 2 messages, so we'll add 2 asserts to total expected*/                            
                         };
+                        var completedCallback = function deserializationIsDone(dictionary) {
+                            writeToElement.innerHTML = writeToElement.innerHTML + ', <br/>done reading messages';
+                            ok (true, 'done reading messages');
+                        };
+                        var errorHandle = function(errorString, dictionary) {
+                            writeToElement.innerHTML = writeToElement.innerHTML + ', <br/> ERROR: <b>' + errorString + '</b>';
+                        };
+                        var dictionary = {'key': "key"};
+                        
                         var createPROTOMessage = function createPROTOMessage() {
                             return new com.climbwithyourfeet.proto.ExampleMsg;
                         };
 
-                        readMessagesFromUint8Array(msgUint8Array, createPROTOMessage, successCallback, errorCallback);
+                        /* use a method in 'googleProtocolBufferMessagesReader.js to deserialize the messages*/
+                        readMessagesFromUint8Array(msgUint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, dictionary);                        
                     }
                 });
                 
-                /*
-                module("get GPB messages test 2 (w/ delimiters)", {
-                    setup: function() {
-                    },
-                    teardown: function() {
-                    }
-                });
                 
-                test("Get GPB messages test 2 (w/ delimeters)", function() {
+                /*** =====================  TEST binary string response of Google Protocol Buffers served w/ byte marker delimiters ====***/
+                
+                test("Test get GPB messages using binary string  (messages served w/ delimiters)", function() {
                     
                     writeToElement.innerHTML = '';
                     
-                    expect( 3 );
+                    expect( 4 );
                     
-                    var bb = new BlobBuilder();
-                    bb.append(makeRequest(url + "?useDelimiters=true", true));
-
-                    var blob = bb.getBlob('application/octet-stream');
-        
-                    ok( (blob), "received a response");
-
-                    var successCallback = function renderMessage(message) {
-                        writeToElement.innerHTML = writeToElement.innerHTML + message;                        
-                        ok( (message), "deserialized message");
-                    };
-                    var createPROTOMessage = function createPROTOMessage() {
-                        return new com.climbwithyourfeet.proto.ExampleMsg;
-                    };
-                    var errorCallback = function(e) {
-                        writeToElement.innerHTML = e.message;                        
-                    };
-            
-                    readMarkerAndMessages(blob, createPROTOMessage, successCallback, errorCallback);
-
-                });
-                */
-                
-                module("get GPB messages test 3 (w/ delimiters)", {
-                    setup: function() {
-                    },
-                    teardown: function() {
-                    }
-                });
-                
-                test("Get GPB messages test 3 (w/ delimeters)", function() {
-                    
-                    writeToElement.innerHTML = '';
-                    
-                    expect( 3 );
-                    
+                    /* send request to server that streams Google Protocol Buffer messages separated w/ delimiters
+                    * from this project */
                     var response = makeRequest(url + "?useDelimiters=true", false);
                     var responseText;
                     try {
@@ -233,19 +225,28 @@
                                         
                     ok( (responseText), "received a response");
 
-                    var successCallback = function renderMessage(message) {
-                        writeToElement.innerHTML = writeToElement.innerHTML + message;                        
-                        ok( (message), "deserialized message");
+                    
+                    /* set up the call back functions*/
+                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
+                        /* dictionary holds parameters you may need to process the message */
+                        writeToElement.innerHTML = writeToElement.innerHTML + '<br/>' + gpbMessage;                        
+                        ok( (gpbMessage), "deserialized message"); 
+                        /* demo has 2 messages, so we'll add 2 asserts to total expected*/
                     };
+                    var completedCallback = function deserializationIsDone(dictionary) {
+                        writeToElement.innerHTML = writeToElement.innerHTML + ', <br/>done reading messages';
+                        ok (true, 'done reading messages');
+                    };
+                    var errorHandle = function(errorString, dictionary) {
+                        writeToElement.innerHTML = writeToElement.innerHTML + ', <br/> ERROR: <b>' + errorString + '</b>';
+                    };
+                    var dictionary = {'key': "key"};
+
                     var createPROTOMessage = function createPROTOMessage() {
                         return new com.climbwithyourfeet.proto.ExampleMsg;
                     };
-                    var errorCallback = function(e) {
-                        writeToElement.innerHTML = e.message;                        
-                    };
             
-                    readMessagesFromBinaryString(responseText, createPROTOMessage, successCallback, errorCallback);
-
+                    readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, dictionary);
                 });
                 
             });
