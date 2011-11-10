@@ -1,14 +1,19 @@
-Demo server w/ java and javascript clients using Google Protocol Buffers over http
+Demo server of Google Prootocol Buffer messages over http with and without the use of delimiters, and
+java and javascript clients to read the messages over http
 with and without the use of delimiters (delimiters aid message-by-message rendering).
 
 (1) To build:
    mvn clean compile package
 
-(2) Deploy the webapp at demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
+(2) Deploy the built webapp (which should be the directory demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1)
     to your local development appengine 
-    Server is Google's appengine.  Download appengine at http://code.google.com/appengine/downloads.html
+    The servlet engine is Google's appengine and is configured for that.  
+    Download appengine at http://code.google.com/appengine/downloads.html
 
-(3) Dial http://localhost:8080/testGB.html in your browser to run the unit test.  
+(3) After deployment, dial http://localhost:8080/testGB.html in your browser to run the unit test.  
 
-The unit test is testGPB.html and includes uses of how to use the javascript libraries.
-
+The unit test is testGPB.html and includes uses of the javascript clients.
+The java clients can be seen in the java unit tests at
+   demo/server/src/test/java/com/climbwithyourfeet/services/serveGPB
+The java unit tests can be run from the project base directory with the command 'mvn test' while the
+application is deployed to localhost:8080
