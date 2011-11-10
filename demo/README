@@ -1,7 +1,7 @@
 Demo server and clients for Google Protocol Buffer messages with and without the use of
 delimiters (delimiters aid message-by-message rendering).
 The server streams the messages over http and the clients read them.  The clients are
-java and javascript clients.
+java and javascript clients and the server is java.
 
 (1) To build:
    mvn clean compile package
