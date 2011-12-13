@@ -1,24 +1,24 @@
 package com.google.code.proto.streamio;
 
 /**
- * A utility class to help write delimiting byte markers for Google protocol buffer 
+ * A utility class to help write delimiting byte markers for Google protocol buffer
  * generated messages used with PBStreamReader.  The delimeter is a byte array holding
  * the size of the generated message that will follow.
- * 
+ *
  * The delimiter is a unsigned byte marker that can be used by clients that can
  * only process ASCII strings.
  *
  * @author nichole
  */
 public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelper {
-   
+
      /**
      * Convert the integer into a byte array composed of byte shifted parts of the integer.
-     * The byte array has been restricted to the signed portion to accommodate clients 
+     * The byte array has been restricted to the signed portion to accommodate clients
      * that can only process strings (ascii being 0-127).
-     * 
+     *
      * @param sz the integer to be represented by the returned byte array
-     * @return 
+     * @return
      */
     @Override
     public byte[] integerToBytesBigEndian(int sz) {
@@ -34,26 +34,26 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
         for (int i = 0; i < marker.length; i++) {
             int shift = i * 7;
             int a = (sz >> shift) & 0x7f;
-            
+
             byte b = (byte) a;
             marker[i] = b;
         }
 
         return marker;
     }
-     
+
      /**
      * Convert the marker byte array to an integer where each item is part of byte shifted integer
-     * The byte array has been restricted to the signed portion to accommodate clients 
+     * The byte array has been restricted to the signed portion to accommodate clients
      * that can only process strings (ascii being 0-127).  The maximum value that can be
      * returned is 2^(8*byteMarkerSize - 1) which is 2GB for a byteMarkerSize = 4.
-     * 
+     *
      * @param marker
-     * @return 
+     * @return
      */
     @Override
      public int bytesToInteger(byte[] marker) {
-        
+
         /*
          *  byte     int
          *  ----     -----
@@ -68,7 +68,7 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
             }
             int d = (int) b;
             int shift = i * 7;
-            d = (d & 127) << shift;
+            d = (d & 0x7f) << shift;
             total += d;
         }
         if (total > Math.pow(2, (8 * byteMarkerSize) - 1)) {

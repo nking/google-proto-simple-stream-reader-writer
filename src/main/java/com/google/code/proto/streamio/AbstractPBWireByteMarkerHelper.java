@@ -29,27 +29,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Abstract class to help write delimiting byte markers for Google protocol buffer 
+ * Abstract class to help write delimiting byte markers for Google protocol buffer
  * generated messages used with PBStreamReader.  The delimeter is a byte array holding
  * the size of the generated message that will follow.
- * 
+ *
  * @author nichole
  */
 public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarkerHelper {
 
     protected final byte markerForStart = (byte) 0;
-     
+
     /**
      * Number of bytes holding a message size, where this number of bytes follows the
      * byteMarker within a delimiter.  The largest number it can hold is roughly 2G.
      */
     protected int byteMarkerSize = 4;
-    
+
     /**
      * The total number of bytes of a delimeter for a generated message.
      */
     protected int delimiterSize = byteMarkerSize + 1;
-   
+
     /**
      * Convert the marker byte array to an integer
      *
@@ -67,7 +67,7 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
      */
     @Override
      public abstract byte[] integerToBytesBigEndian(int sz);
-     
+
     /**
      * Create a delimiter for the given GeneratedMessage.
      *
@@ -78,17 +78,17 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
      */
     @Override
     public byte[] createMessageDelimiter(GeneratedMessage message) {
-        
+
         Integer sz = message.getSerializedSize();
-        
+
         byte[] szInBytes = integerToBytesBigEndian(sz);
-        
+
         byte[] delimeter = new byte[delimiterSize];
-        
+
         delimeter[0] = markerForStart;
-        
+
         System.arraycopy(szInBytes, 0, delimeter, 1, byteMarkerSize);
-        
+
         return delimeter;
     }
 
@@ -102,18 +102,18 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
      */
     @Override
     public int estimateTotalContentLength(List<? extends GeneratedMessage> messages) {
-        
+
         int sum = 0;
-        
+
         for (GeneratedMessage message : messages) {
-        
+
             int messageSize = message.getSerializedSize();
-            
+
             Logger.getLogger(PBWireSignedByteMarkerHelper.class.getName()).log(Level.FINEST, "size of a message = {0}", Integer.toString(messageSize));
-            
+
             sum += messageSize + delimiterSize;
         }
-        
+
         return sum;
     }
 
@@ -147,5 +147,5 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
     public byte getMarkerForStart() {
         return markerForStart;
     }
-    
+
 }
