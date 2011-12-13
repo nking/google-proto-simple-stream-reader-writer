@@ -1,13 +1,14 @@
 A Java and Javascript library to read and write Google Protocol Buffer messages 
 to input and output streams using delimiters between messages to aid message-by-message 
-rendering.
+rendering.  Includes a demo project of java server streaming messages over the wire and
+java and javascript clients reading the messages.
 
 -----------------------------------------------------------------------------------
 To build:
    mvn clean compile package
 the binary will ./target/gpb-stream-reader-writer-{version}.jar
 
-A demo server and client are provided in demo and a README is there with build and
+A demo server and client are provided in directory demo and a README is there with build and
 deploy instructions.  To build the demo:
    cd demo
    mvn clean compile package
@@ -67,7 +68,7 @@ Javadocs for this library:
 Javascript functions:
   function readMessagesFromUint8Array(uint8Array, createPROTOMessage, perMessageCallback, errorCallback);
   function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessageCallback, errorCallback);
-
+and more...
 
 Detailed instructions in using Google Protocol Buffers beyond this library:
    -- Download http://code.google.com/apis/protocolbuffers/ and install it on your computer.
