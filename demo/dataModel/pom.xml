@@ -163,7 +163,7 @@
         <dependency>
             <groupId>com.google.code.google-proto-simple-reader-writer</groupId>
             <artifactId>gpb-stream-reader-writer</artifactId>
-            <version>1.5</version>
+            <version>1.5.2</version>
         </dependency>
     </dependencies>
     <properties>

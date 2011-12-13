@@ -19,7 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * serves gpb messages
+ * serves gpb messages.  if noDelimiters=true, returns the protocol buffers as ExampleMessages, else as
+ *    instances of ExampleMsg w/ delimiters.
  *
  * @author nichole
  */
@@ -30,7 +31,7 @@ public class GPBServlet extends HttpServlet {
     private transient Logger log = null;
 
     private final List<ExampleMessageProto.ExampleMsg> messages = new ArrayList<ExampleMsg>();
-   
+
     private List<String> sharedDomains = new ArrayList<String>();
 
     private String name1 = "Wallaroo";
@@ -39,41 +40,44 @@ public class GPBServlet extends HttpServlet {
     private String name2 = "Wallaby";
     private String value2 = "Any of various small or medium-sized kangaroos; often brightly colored.[Wordnet]";
     private int code2 = 201;
-      
+
     private ExampleMessages messagesGPB = null;
-    
+
     @Override
     public void init(ServletConfig config) throws ServletException {
-        
+
         log = Logger.getLogger(this.getClass().getName());
-      
+
         initSharedDomains();
-        
+
+        /* for use with delimiters, creating messages individially and storing in an array to write to stream*/
         ExampleMsg.Builder msg = ExampleMsg.newBuilder();
         msg.setName(name1);
         msg.setValue(value1);
         msg.setCode(code1);
-        
+
         messages.add(msg.build());
-        
+
         msg.clear();
         msg.setName(name2);
         msg.setValue(value2);
         msg.setCode(code2);
-        
+
         messages.add(msg.build());
-        
+
+        /* for use as protocol buffers w/o exterior delimiters, can use the protocol buffer structure itself: */
         ExampleMessages.Builder builderGPBMessages = ExampleMessages.newBuilder();
         builderGPBMessages.addAllMsg(messages);
         messagesGPB = builderGPBMessages.build();
     }
-    
+
     private synchronized void initSharedDomains() {
         if (sharedDomains.isEmpty()) {
             String appEngineEnv = System.getProperty("com.google.appengine.runtime.environment");
             if (appEngineEnv != null && appEngineEnv.equalsIgnoreCase("Development")) {
-                sharedDomains.add("http://localhost:8080");
-                sharedDomains.add("http://localhost:8081");
+                sharedDomains.add("http://127.0.0.1:8080");
+                sharedDomains.add("http://127.0.0.1:8081");
+                sharedDomains.add("http://192.168.15.1");
             }
         }
     }
@@ -83,42 +87,48 @@ public class GPBServlet extends HttpServlet {
         throws ServletException, IOException {
 
         log.log(Level.FINE, "{0}", req.getRequestURI());
-        
+
         String useDelimiters = req.getParameter("useDelimiters");
-        
+
         BufferedOutputStream out = null;
-        
+
         try {
-            if ((useDelimiters != null) && useDelimiters.equalsIgnoreCase("true")) {
-                
-                resp.setContentType("application/octet-stream");
-                resp.setCharacterEncoding("UTF-8");
-                        
+            if ((useDelimiters == null) || useDelimiters.equalsIgnoreCase("true")) {
+
+                //resp.setContentType("text/plain; charset=x-user-defined");
+                resp.setContentType("text/plain");
+                resp.setCharacterEncoding("ISO-8859-1"); /* needed for IE, most of their ajax expects text/plain */
+
+                resp.addHeader("Cache-Control", "no-cache"); /* needed for Android */
+
                 PBWireSignedByteMarkerHelper pbh = new PBWireSignedByteMarkerHelper();
-                
+
                 int expectedSize = pbh.estimateTotalContentLength(messages);
-                
+
                 resp.setContentLength(expectedSize);
-                
+
                 addCORSHeaders(resp, req.getHeader("Origin"));
-                
+
                 out = new BufferedOutputStream(resp.getOutputStream(), 1024);
 
                 PBStreamWriter.writeToStream(out, messages);
-                    
-                log.log(Level.INFO, "sent {0} messages", messages.size());
-                
+
+                log.log(Level.INFO, "sent {0} messages w/ delimiters", messages.size());
+
             } else {
-                
-                resp.setContentType("application/octet-stream");
-                resp.setCharacterEncoding("UTF-8");
-                                        
+
+                //resp.setContentType("text/plain; charset=x-user-defined");
+                resp.setContentType("text/plain");
+                resp.setCharacterEncoding("ISO-8859-1"); /* needed for IE, most of their ajax expects text/plain */
+
+                resp.addHeader("Cache-Control", "no-cache"); /* needed for Android */
+
                 int expectedSize = messagesGPB.getSerializedSize();
-                
+
                 resp.setContentLength(expectedSize);
-                
+
                 addCORSHeaders(resp, req.getHeader("Origin"));
-                
+
                 out = new BufferedOutputStream(resp.getOutputStream(), 1024);
 
                 CodedOutputStream cos = CodedOutputStream.newInstance(out);
@@ -126,7 +136,7 @@ public class GPBServlet extends HttpServlet {
                 cos.flush();
                 out.flush();
 
-                log.log(Level.INFO, "sent {0} messages", messages.size());
+                log.log(Level.INFO, "sent {0} messages without delimiters", messages.size());
             }
 
         } catch (NumberFormatException e) {
@@ -136,7 +146,7 @@ public class GPBServlet extends HttpServlet {
         } catch (Throwable t) {
 
             log.severe(t.getMessage());
- 
+
             t.printStackTrace();
 
             resp.setStatus(500);
@@ -144,7 +154,7 @@ public class GPBServlet extends HttpServlet {
         } finally {
             if (out != null)
                 out.close();
-            
+
             log.log(Level.FINE, "done writing");
         }
     }
@@ -157,25 +167,25 @@ public class GPBServlet extends HttpServlet {
     }
 
     @Override
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) 
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException {
-                
+
         addCORSHeaders(resp, req.getHeader("Origin"));
     }
-    
-    protected void addCORSHeaders(HttpServletResponse resp, String origin) 
+
+    protected void addCORSHeaders(HttpServletResponse resp, String origin)
         throws ServletException, IOException {
 
         if (origin == null) {
             return;
         }
-                    
+
         log.info("origin = " + origin);
-     
+
         if (sharedDomains.contains(origin.trim())) {
-                       
+
             log.info("adding CORS headers to request");
-            
+
             resp.setHeader("Access-Control-Allow-Headers", "x-requested-with");
             resp.setHeader("Access-Control-Allow-Origin",  origin);
             resp.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
@@ -183,18 +193,18 @@ public class GPBServlet extends HttpServlet {
             resp.setHeader("Access-Control-Max-Age",       "86400");
         }
     }
-    
+
     public int estimateTotalContentLength(List<? extends GeneratedMessage> messages) {
-        
+
         int sum = 0;
-        
+
         for (GeneratedMessage message : messages) {
-        
+
             int messageSize = message.getSerializedSize();
-                        
+
             sum += messageSize;
         }
-        
+
         return sum;
     }
 }
