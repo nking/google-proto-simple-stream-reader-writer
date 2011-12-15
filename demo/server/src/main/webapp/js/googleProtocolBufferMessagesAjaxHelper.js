@@ -9,19 +9,18 @@
 *       server settings above are used.
 *    -- Google Protocol Buffers with the delimiters are successfully passed to the ajax
 *       objects as responseText or response for webkit and mozilla based browsers, but
-*       not for IE, excepting XDomainRequest capable browsers.
+*       not for IE, excepting some XDomainRequest capable browsers.
 *       For IE (ActiveXObject ajax objects), the data is present in the ajax object's responseBody
 *       and is only accessible to IE specific languages or components such as vbscript
 *       or jscript.  The additional processing time to access the data and the fact
 *       that one can't use web workers yet in IE means that one should
 *       instead use Google Protocol Buffers without delimiters for IE.
 *
-*
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library
 * http://code.google.com/apis/protocolbuffers/
 *
-* The messages are sent over the network separated by a byte marker delimiter.
+* The messages can be sent over the network separated by a byte marker delimiter.
 * The library that writes the delimiters and the messages to the network stream is
 *    http://code.google.com/p/google-proto-simple-stream-reader-writer/
 *
@@ -166,7 +165,7 @@ function readTypedArrayMessagesNoDelimiters(msgUint8Array, cb, errCB, createPROT
         var decodedmsgs = createPROTOMessageHandle();
         var stream = new PROTO.ByteArrayStream(array);
         decodedmsgs.ParseFromStream(stream);
-        cb(decodedmsgs.msg);
+        cb(decodedmsgs);
     } catch(e) {
         errCB(e.message);
     }
@@ -187,7 +186,7 @@ function readResponseStringMessagesNoDelimiters(str, cback, ecback, createPROTOM
         var decodedmsgs = createPROTOMessageHandle();
         var stream = new PROTO.ByteArrayStream(array);
         decodedmsgs.ParseFromStream(stream);
-        cback(decodedmsgs.msg);
+        cback(decodedmsgs);
     } catch(e) {
         ecback(e.message);
     }
@@ -243,7 +242,7 @@ function _makeXMLHttpRequest(url, successCallback, errorCallback, useArrayBuffer
         }, timeoutMillis);
         xhr.send();
     } else {
-        errorCallback('Could not construct an XMLHttpRequest.');
+        throw new Error('could not construct XMLHttpRequest');
     }
 }
 
@@ -304,8 +303,7 @@ function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutM
         }
     }
     if (xhr == undefined) {
-        errorCallback('Could not construct an ActiveXObject.');
-        return;
+        throw new Error('Could not construct an ActiveXObject.');
     }
 
     xhr.onreadystatechange = function() {
@@ -320,7 +318,7 @@ function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutM
                     response = x.responseBody;
                     /* This is an IE native array of bytes not accessible by javascript, but accessible via
                      * vbscript or jscript.  Using vbscript was cpu intense so didn't include it here, but here's a very helpful
-                     * page on now to do that:
+                     * page on how to do that:
                      * http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
                      *
                      * Instead of using this method, will choose to always stream messages without delimiters
