@@ -15,6 +15,10 @@
 *       or jscript.  The additional processing time to access the data and the fact
 *       that one can't use web workers yet in IE means that one should
 *       instead use Google Protocol Buffers without delimiters for IE.
+*       (Note that the IE browsers only interpret iso8859-1 as text and this project is offering
+*       delimiters that use character code ranges not part of iso8859-1, specifically 0-31 and 128-159,
+*       and so might offer other delimiters soon, but again, the point is moot because the browsers with
+*       the iso8859-1 limitation cannot use web workers, so delimiters aren't useful in them...)
 *
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library

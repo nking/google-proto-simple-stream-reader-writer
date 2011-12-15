@@ -3,6 +3,13 @@ to input and output streams using delimiters between messages to aid message-by-
 rendering.  Includes a demo project of java server streaming messages over the wire and
 java and javascript clients reading the messages.
 
+Note that if you are using the javascript libraries and expect IE clients, use the
+libraries w/o delimiters for now until I write additional delimiters that avoid character
+codes 0-32 and 128-159 which iso8859-1 doesn't include.
+webkit and mozilla clients interpret the full range of ascii as text and the latest
+of those browsers handle binary strings in any case, so the delimiters are passed
+correctly in those browsers.
+
 -----------------------------------------------------------------------------------
 To build:
    mvn clean compile package
