@@ -48,9 +48,9 @@
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                        var pass = (messages != undefined) && (messages.msg != undefined);
+                        pass = pass && (messages.msg.length > 0);
+                        var pbMessage = messages.msg[0];
                         pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
@@ -67,7 +67,7 @@
                     try {
                         makeXMLHttpRequestForArrayBufferWithTypedArrayNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -78,9 +78,9 @@
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                        var pass = (messages != undefined) && (messages.msg != undefined);
+                        pass = pass && (messages.msg.length > 0);
+                        var pbMessage = messages.msg[0];
                         pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
@@ -98,7 +98,7 @@
                     try {
                         makeXMLHttpRequestWithoutArrayBufferNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -109,9 +109,9 @@
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                        var pass = (messages != undefined) && (messages.msg != undefined);
+                        pass = pass && (messages.msg.length > 0);
+                        var pbMessage = messages.msg[0];
                         pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
@@ -129,7 +129,7 @@
                     try {
                         makeXDomainRequestNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -140,9 +140,9 @@
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                        var pass = (messages != undefined) && (messages.msg != undefined);
+                        pass = pass && (messages.msg.length > 0);
+                        var pbMessage = messages.msg[0];
                         pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
@@ -161,7 +161,7 @@
                         makeActiveXObjectRequestNoDelimiters(gpburl + '?useDelimiters=false',
                             successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -172,9 +172,9 @@
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                        var pass = (messages != undefined) && (messages.msg != undefined);
+                        pass = pass && (messages.msg.length > 0);
+                        var pbMessage = messages.msg[0];
                         pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
@@ -192,7 +192,7 @@
                     try {
                         makeSyncXMLHttpRequestNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -203,9 +203,9 @@
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                        var pass = (messages != undefined) && (messages.msg != undefined);
+                        pass = pass && (messages.msg.length > 0);
+                        var pbMessage = messages.msg[0];
                         pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
@@ -224,7 +224,7 @@
                         makeSyncActiveXObjectRequestNoDelimiters(gpburl + '?useDelimiters=false&c=' + (new Date()).getTime(),
                             successCallback, errorCallback, createYourPROTOMessage1);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -269,7 +269,7 @@
                         makeXMLHttpRequestForArrayBufferWithTypedArray(gpburl, createYourPROTOMessage2,
                             perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -313,7 +313,7 @@
                         makeXMLHttpRequestWithoutArrayBuffer(gpburl, createYourPROTOMessage2,
                             perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -356,7 +356,7 @@
                     try {
                         makeXDomainRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -399,7 +399,7 @@
                     try {
                         makeActiveXObjectRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -444,7 +444,7 @@
                     try {
                         makeSyncXMLHttpRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
 
@@ -489,10 +489,9 @@
                     try {
                         makeSyncActiveXObjectRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary);
                     } catch(e) {
-                        printFail(testNumber, testDesc, e.message);
+                        errorCallback(e.message);
                     }
                 });
-
             });
 
         </script>
