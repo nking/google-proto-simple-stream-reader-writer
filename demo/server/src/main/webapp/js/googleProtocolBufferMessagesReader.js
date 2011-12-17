@@ -128,13 +128,22 @@ function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessa
     _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary);
 }
 
+function readMessagesFromBinaryString_no_delimiters(binaryString, createCityGridPROTOMessage, messageCallback, errorHandle, dictionary) {
+    var decodedmsg = createCityGridPROTOMessage();
+    try {
+        _readMessageFromBinaryString(binaryString, 0, binaryString.length, decodedmsg);
+        messageCallback(decodedmsg, dictionary);
+    } catch (e) {
+        errorCallback(e.message, dictionary);
+    }
+}
+
 /*
  *==============================================================================================
  *  functions below here are support for the public functions above and should
  *  not normally be used by caller
  *==============================================================================================
 */
-
 
 function _readMessagesFromUint8ArrayIteratively(startOffset, uint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary) {
     if (uint8Array == undefined) {
@@ -243,7 +252,6 @@ function _readMessageFromBinaryString(binaryString, startOffset, stopOffset, dec
         var c = binaryString.charCodeAt(j);
         var b = c & 0xff;
         array[i] = b;
-        console.log(array[i]);
         i++;
     }
     var stream = new PROTO.ByteArrayStream(array);

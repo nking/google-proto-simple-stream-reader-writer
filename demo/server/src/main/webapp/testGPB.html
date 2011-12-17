@@ -13,6 +13,7 @@
 
         <script>
             var gpburl = "http://localhost:8080/gpb";
+
             var retryCount = 0;
             var timeoutInMillis = 15000;
 
@@ -127,7 +128,7 @@
                     }
 
                     try {
-                        makeXDomainRequestNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1);
+                        makeXDomainRequestNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
                     } catch(e) {
                         errorCallback(e.message);
                     }
@@ -354,7 +355,7 @@
                     var userdictionary = {'key': "key"};
 
                     try {
-                        makeXDomainRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary);
+                        makeXDomainRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
                     } catch(e) {
                         errorCallback(e.message);
                     }

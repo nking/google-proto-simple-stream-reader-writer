@@ -15,10 +15,6 @@
 *       or jscript.  The additional processing time to access the data and the fact
 *       that one can't use web workers yet in IE means that one should
 *       instead use Google Protocol Buffers without delimiters for IE.
-*       (Note that the IE browsers only interpret iso8859-1 as text and this project is offering
-*       delimiters that use character code ranges not part of iso8859-1, specifically 0-31 and 128-159,
-*       and so might offer other delimiters soon, but again, the point is moot because the browsers with
-*       the iso8859-1 limitation cannot use web workers, so delimiters aren't useful in them...)
 *
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library
@@ -89,17 +85,17 @@ function makeXMLHttpRequestWithoutArrayBuffer(url, createPROTOMessage, perMessag
     _makeXMLHttpRequest(url, stringCallback, errorHandle, useArrayBuffer, timeoutMillis);
 }
 
-function makeXDomainRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages) {
+function makeXDomainRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages, timeoutMillis) {
     var stringCallback = function(responseText) {
         readResponseStringMessagesNoDelimiters(responseText, successCallback, errorCallback, createPROTOMessages);
     }
-    _makeXDomainRequest(url, stringCallback, errorCallback);
+    _makeXDomainRequest(url, stringCallback, errorCallback, timeoutMillis);
 }
-function makeXDomainRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary) {
+function makeXDomainRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var stringCallback = function(responseText) {
         readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
     }
-    _makeXDomainRequest(url, stringCallback, errorHandle);
+    _makeXDomainRequest(url, stringCallback, errorHandle, timeoutMillis);
 }
 
 function makeActiveXObjectRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages, timeoutMillis) {
@@ -162,9 +158,11 @@ function readTypedArrayMessagesNoDelimiters(msgUint8Array, cb, errCB, createPROT
         return;
     }
     var array = new Array(msgUint8Array.byteLength);
-    for (var j = 0; j < msgUint8Array.byteLength; j++) {
+    var j;
+    for (j = 0; j < msgUint8Array.byteLength; j++) {
         array[j] = msgUint8Array[j];
     }
+
     try {
         var decodedmsgs = createPROTOMessageHandle();
         var stream = new PROTO.ByteArrayStream(array);
@@ -181,7 +179,8 @@ function readResponseStringMessagesNoDelimiters(str, cback, ecback, createPROTOM
         return;
     }
     var array = new Array(str.length);
-    for (var j = 0; j < str.length; j++) {
+    var j;
+    for (j = 0; j < str.length; j++) {
         var c = str.charCodeAt(j);
         var b = c & 0xff;
         array[j] = b;
@@ -199,6 +198,10 @@ function readResponseStringMessagesNoDelimiters(str, cback, ecback, createPROTOM
 function _makeXMLHttpRequest(url, successCallback, errorCallback, useArrayBuffer, timeoutMillis) {
     var timerId;
     var clearedInterval = false;
+
+    if (timeoutMillis == undefined) {
+        timeoutMillis = 15000;
+    }
 
     var xhr = new XMLHttpRequest();
 
@@ -250,43 +253,58 @@ function _makeXMLHttpRequest(url, successCallback, errorCallback, useArrayBuffer
     }
 }
 
-function _makeXDomainRequest(url, successCallback, errorCallback) {
-    var xhr;
+function _makeXDomainRequest(url, successCallback, errorCallback, timeoutMillis) {
 
     if (typeof XDomainRequest != "undefined") {
+        var xhr;
+        try {
+            xhr = new XDomainRequest();
 
-        xhr = new XDomainRequest();
+            xhr.onerror = function(e){
+                var msg = xhr.responseText;
+                errorCallback( msg );
+            };
 
-        xhr.onerror = function(e){
-            var msg = xhr.responseText;
-            errorCallback( msg );
-        };
+            var count=0;
+            xhr.onprogress = function() {
+                var x = xhr;
+                count++;
+            };
 
-        xhr.onload = function() {
-            var responseText;
-            try {
-                responseText = xhr.data.responseText;
-            } catch (e) {
-                if (xhr.responseBody) {
-                    responseText = xhr.responseBody;
-                } else {
+            xhr.onload = function() {
+                var x = xhr;
+                var responseText;
+                try {
                     responseText = xhr.responseText;
+                } catch (e) {
+                    if (xhr.responseBody) {
+                        responseText = xhr.responseBody;
+                    } else {
+                        responseText = xhr.response;
+                    }
                 }
+                successCallback(responseText);
+            };
+
+            xhr.contentType = 'text/plain; charset=x-user-defined';
+
+            xhr.timeout = timeoutMillis;
+
+            xhr.open('GET', url);
+
+            xhr.ontimeout = function () {
+                xhr.abort();
+                errorCallback( 'request timed out');
             }
-            successCallback(responseText);
-        };
 
-        xhr.open('GET', url);
-        xhr.contentType = 'text/plain; charset=x-user-defined';
-        xhr.timeout = function () {
+            xhr.send();
+
+        } catch(e) {
             xhr.abort();
-            errorCallback( 'request timed out');
+            throw new Error(e.message);
         }
-
-        xhr.send(null);
-
     } else {
-        errorCallback('Could not construct an XDomainRequest.');
+        throw new Error('Could not construct an XDomainRequest.');
     }
 }
 
@@ -294,65 +312,103 @@ function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutM
     var timerId;
     var clearedInterval = false;
 
+    if (timeoutMillis == undefined) {
+        timeoutMillis = 15000;
+    }
+
     var xhr;
-    var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP",
-        "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.3.0","Msxml2.XMLHTTP"];
-    if (window.ActiveXObject){
-        for (var i=0; i < activexmodes.length; i++){
-            try {
-                xhr = new ActiveXObject(activexmodes[i]);
-                break;
-            } catch(e){
+
+    try {
+        var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP",
+            "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.3.0","Msxml2.XMLHTTP.4.0"];
+        if (window.ActiveXObject){
+            for (var i=0; i < activexmodes.length; i++){
+                try {
+                    xhr = new ActiveXObject(activexmodes[i]);
+                    break;
+                } catch(e){
+                }
             }
         }
-    }
-    if (xhr == undefined) {
-        throw new Error('Could not construct an ActiveXObject.');
-    }
+        if (xhr == undefined) {
+            throw new Error('Could not construct an ActiveXObject.');
+        }
 
-    xhr.onreadystatechange = function() {
-        var x = xhr;
-        if (x.readyState == 4) {
-            clearInterval(timerId);
-            if (x.status == '200') {
+        /* cannot use setRequestHeader in ie 9 ?
+        try{
+            xhr.setRequestHeader('text/plain; charset=x-user-defined');
+        } catch(e) {console.log('header: ' + e.message);}
+        */
 
-                var response = x.responseText;
-                /*
-                if ((response == undefined) || (response.length == 0) && (x.responseBody != undefined)) {
-                    response = x.responseBody;
-                    /* This is an IE native array of bytes not accessible by javascript, but accessible via
-                     * vbscript or jscript.  Using vbscript was cpu intense so didn't include it here, but here's a very helpful
-                     * page on how to do that:
-                     * http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
-                     *
-                     * Instead of using this method, will choose to always stream messages without delimiters
-                     * for IE requests.
-                }*/
-                successCallback(response);
+        var async = true;
+        xhr.open('GET', url, async); /* this needs to be before onreadystatchange*/
 
-            } else {
-                errorCallback( xhr.statusText);
+        /* cannot use setRequestHeader in ie 9 ?
+        try{
+            xhr.setRequestHeader('text/plain; charset=x-user-defined');
+        } catch(e) {console.log('header: ' + e.message);}
+        */
+
+        xhr.onreadystatechange = function() {
+            var x = xhr;
+            if (xhr.readyState == 4) {
+                /*clearInterval(timerId);*/
+                if (xhr.status == '200') {
+                    var response = xhr.responseText;
+                    /*
+                    if ((response == undefined) || (response.length == 0) && (x.responseBody != undefined)) {
+                        response = x.responseBody;
+                        /* This is an IE native array of bytes not accessible by javascript, but accessible via
+                         * vbscript or jscript.  Using vbscript was cpu intense so didn't include it here, but here's a very helpful
+                         * page on how to do that:
+                         * http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
+                         *
+                         * Instead of using this method, will choose to always stream messages without delimiters
+                         * for IE requests.
+                         *
+                         * OR load from a file in the first place?
+                         *
+                         * var adTypeBinary = 1
+
+                            oStream = new ActiveXObject("ADODB.Stream");
+                            oStream.Type = adTypeBinary;
+                            oStream.Open;
+
+                            oStream.LoadFromFile(filename);
+                            content = oStream.Read;
+
+                            oStream.Close;
+                            oStream = null;
+                    }*/
+                    successCallback(response);
+
+                } else {
+                    errorCallback( xhr.statusText);
+                }
             }
+        };
+/*
+        if (url.match(/\?/)) {
+            url = url + "&t=" + (new Date()).getTime();
+        } else {
+            url = url + "?t=" + (new Date()).getTime();
         }
-    };
-    timerId = setTimeout(function() {
-        if (!clearedInterval) {
-            clearedInterval = true;
-            clearInterval(timerId);
-            xhr.abort();
-            errorCallback('request timed out');
-        }
-    }, timeoutMillis);
+*/
+        timerId = setTimeout(function() {
+            if (!clearedInterval) {
+                clearedInterval = true;
+                clearInterval(timerId);
+                xhr.abort();
+                errorCallback('request timed out');
+            }
+        }, timeoutMillis);
 
-    var async = true;
+        xhr.send();
 
-    try{
-        xhr.setRequestHeader('text/plain; charset=x-user-defined');
-    } catch(e) {}
-
-    xhr.open('GET', url, async);
-
-    xhr.send(null);
+    } catch(e) {
+        clearInterval(timerId);
+        errorCallback(e.message)
+    }
 }
 
 function _makeSyncXMLHttpRequest(url, errorCallback, useArrayBuffer) {
@@ -438,9 +494,15 @@ function _makeSyncActiveXObjectRequest(url, errorCallback) {
         }
 
         var async = false;
+
+        if (url.match(/\?/)) {
+            url = url + "&t=" + (new Date()).getTime();
+        } else {
+            url = url + "?t=" + (new Date()).getTime();
+        }
         xhr.open('GET', url, async);
 
-        xhr.send(null);
+        xhr.send();
 
         if (xhr.status == '200') {
             return xhr.responseText;
