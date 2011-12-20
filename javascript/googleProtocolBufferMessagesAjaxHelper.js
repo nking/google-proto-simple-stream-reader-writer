@@ -47,6 +47,28 @@
 * protobuf.js https://github.com/sirikata/protojs/blob/master/protobuf.js
 * and pbj.js https://github.com/sirikata/protojs/blob/master/pbj.js
 * to deserialize the messages.
+*
+* Note that the ActiveXObject function below needs this bit of vbscript added to your html header:
+* 
+        <!-- from http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/ -->
+        <!--[if IE]>
+            <script type="text/vbscript">
+                Function IEBinaryToArray_ByteStr(Binary)
+                    IEBinaryToArray_ByteStr = CStr(Binary)
+                End Function
+                Function IEBinaryToArray_ByteStr_Last(Binary)
+                    Dim lastIndex
+                    lastIndex = LenB(Binary)
+                    if lastIndex mod 2 Then
+                        IEBinaryToArray_ByteStr_Last = Chr( AscB( MidB( Binary, lastIndex, 1 ) ) )
+                    Else
+                        IEBinaryToArray_ByteStr_Last = ""
+                    End If
+                End Function
+            </script>
+
+        <![endif]-->
+
 */
 
 /**
