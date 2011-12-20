@@ -19,21 +19,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Serves Google Protocol Buffer Messages.  Default settings serve the Google Protocol
- * Buffer messages with built-in delimiters and content-type ""octet-stream" and
- * character encoding "UTF-8".
- *
- * Servlet accepts the following optional parameters:
- *   useComposite = true
- *   ct = text/plain
- *   ct = octet-stream
- *   ec = UTF-7
- *   ec = UTF-8
- *   ec = ISO-8859-1
+ * Serves Google Protocol Buffer messages with delimiters outside of the messages.
+ * Useful if need to search a stream to find a signature byte marker in order to
+ * see where the next message starts.
+ * (You might need to alter the byte marker to
+ * make it unique for your content.  Currently, the signature for the start of the byte
+ * marker is the control character null (0) and the remaining 4 bytes hold the message
+ * size which is fine for text.)
  *
  * @author nichole
  */
-public class GPBServlet extends HttpServlet {
+public class GPBPlusServlet extends HttpServlet {
 
     private final static long serialVersionUID = 6;
 
@@ -59,7 +55,7 @@ public class GPBServlet extends HttpServlet {
 
         initSharedDomains();
 
-        // build individual messages
+        /* for use with delimiters, creating messages individially and storing in an array to write to stream*/
         ExampleMsg.Builder msg = ExampleMsg.newBuilder();
         msg.setName(name1);
         msg.setValue(value1);
@@ -74,7 +70,7 @@ public class GPBServlet extends HttpServlet {
 
         messages.add(msg.build());
 
-        // build a composite message composed of the above messages
+        /* for use as protocol buffers w/o exterior delimiters, can use the protocol buffer structure itself: */
         ExampleMessages.Builder builderGPBMessages = ExampleMessages.newBuilder();
         builderGPBMessages.addAllMsg(messages);
         messagesGPB = builderGPBMessages.build();
@@ -85,7 +81,8 @@ public class GPBServlet extends HttpServlet {
             String appEngineEnv = System.getProperty("com.google.appengine.runtime.environment");
             if (appEngineEnv != null && appEngineEnv.equalsIgnoreCase("Development")) {
                 sharedDomains.add("http://127.0.0.1:8080");
-                sharedDomains.add("http://192.168.15.1:8080");
+                sharedDomains.add("http://127.0.0.1:8081");
+                sharedDomains.add("http://192.168.15.1");
             }
         }
     }
@@ -95,8 +92,6 @@ public class GPBServlet extends HttpServlet {
         throws ServletException, IOException {
 
         log.log(Level.FINE, "{0}", req.getRequestURI());
-
-        String useComposite = req.getParameter("useComposite");
 
         BufferedOutputStream out = null;
 
@@ -141,32 +136,23 @@ public class GPBServlet extends HttpServlet {
                 log.info("setting stream contenttype to octet-stream and encoding to UTF-8");
             }
 
-            resp.addHeader("Cache-Control", "no-cache, must-revalidate, max-age=0");
+            resp.addHeader("Cache-Control", "no-cache"); /* needed for Android */
+
+            PBWireSignedByteMarkerHelper pbh = new PBWireSignedByteMarkerHelper();
+
+            int expectedSize = pbh.estimateTotalContentLength(messages);
+
+            resp.setContentLength(expectedSize);
 
             addCORSHeaders(resp, req.getHeader("Origin"));
 
-            if ((useComposite == null) || useComposite.equalsIgnoreCase("false")) {
+            out = new BufferedOutputStream(resp.getOutputStream(), 1024);
 
-                out = new BufferedOutputStream(resp.getOutputStream(), 1024);
-                for (int i = 0; i < messages.size(); i++) {
-                    messages.get(i).writeDelimitedTo(out);
-                }
+            PBStreamWriter.writeToStream(out, messages);
 
-                resp.setStatus(200);
+            resp.setStatus(200);
 
-                log.log(Level.INFO, "sent {0} messages w/ built-in delimiters", messages.size());
-
-            } else {
-
-                out = new BufferedOutputStream(resp.getOutputStream(), 1024);
-
-                log.info("***gpb composite via codedoutput w/ a single delimiter");
-                messagesGPB.writeDelimitedTo(out);
-
-                resp.setStatus(200);
-
-                log.log(Level.INFO, "sent {0} messages as a composite message w/ built-in delimiter", messages.size());
-            }
+            log.log(Level.INFO, "sent {0} messages w/ delimiters", messages.size());
 
         } catch (NumberFormatException e) {
 

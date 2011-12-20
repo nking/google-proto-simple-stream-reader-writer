@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
-   
+
     <servlet>
         <servlet-name>GPBServlet</servlet-name>
         <servlet-class>com.climbwithyourfeet.services.serveGPB.GPBServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>GPBPlusServlet</servlet-name>
+        <servlet-class>com.climbwithyourfeet.services.serveGPB.GPBPlusServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
         <servlet-name>GPBServlet</servlet-name>
         <url-pattern>/gpb</url-pattern>
     </servlet-mapping>
-  
+
+    <servlet-mapping>
+        <servlet-name>GPBPlusServlet</servlet-name>
+        <url-pattern>/gpbplus</url-pattern>
+    </servlet-mapping>
+
 </web-app>

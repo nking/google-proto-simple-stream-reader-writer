@@ -3,6 +3,9 @@ delimiters (delimiters aid message-by-message rendering).
 The server streams the messages over http and the clients read them.  The clients are
 java and javascript clients and the server is java.
 
+For delimiter choices, methods exist for using the built-in methods for google protocol
+buffers or the external delimiters available in this project.
+
 (1) To build:
    mvn clean compile package
 
@@ -13,8 +16,9 @@ java and javascript clients and the server is java.
     
 (3) After deployment, dial http://localhost:8080/testGB.html in your browser to run the unit test.  
 
-The javascript unit test is testGPB.html and includes a few usages.
+The javascript unit test is testGPB.html and includes best usages for different clients and the native delimiters.
 The java unit tests show client usage and can be seen at
    demo/server/src/test/java/com/climbwithyourfeet/services/serveGPB
+and there's another servlet hosting alternative delimiters.
 The java unit tests can be run from the project base directory with the command 'mvn test' while the
 application is deployed to localhost:8080

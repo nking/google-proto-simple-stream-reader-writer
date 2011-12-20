@@ -2,19 +2,36 @@
 * Methods to help w/ browser specific ajax calls and parsing of responses.
 *
 * A few things found:
-*    -- Server response should use character encoding ISO-8859-1 and content-type text/plain
-*       due to IE limitations.
-*    -- Google Protocol Buffers (without additional delimiters) are successfully
-*       passed to the ajax objects as responseText or response for all browers if
-*       server settings above are used.
-*    -- Google Protocol Buffers with the delimiters are successfully passed to the ajax
-*       objects as responseText or response for webkit and mozilla based browsers, but
-*       not for IE, excepting some XDomainRequest capable browsers.
-*       For IE (ActiveXObject ajax objects), the data is present in the ajax object's responseBody
-*       and is only accessible to IE specific languages or components such as vbscript
-*       or jscript.  The additional processing time to access the data and the fact
-*       that one can't use web workers yet in IE means that one should
-*       instead use Google Protocol Buffers without delimiters for IE.
+*
+*    -- For IE6-IE8 this combination works:
+*       server settings:
+*            content-type=octet/stream
+*            character encoding=UTF-8
+*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
+*       and client AJAX being ActiveXObject with attempts for "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
+*           "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
+*
+*    -- For IE9, this combination works:
+*       server settings:
+*            content-type=octet/stream
+*            character encoding=UTF-7 <==
+*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
+*       and client AJAX being XDomainRequest
+*
+*    -- For webkit (Chrome, Safari), nearly all combinations work, but this complements the above:
+*       server settings:
+*            content-type=octet/stream
+*            character encoding=UTF-8
+*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
+*       and client being XMLHttpRequest
+*
+*   -- For mozilla, this combination works:
+*       server settings:
+*            content-type=octet/stream
+*            character encoding=UTF-8
+*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
+*       and client being XMLHttpRequest (but don't use arrayBuffer setting)
+*
 *
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library
@@ -52,109 +69,47 @@
         your code
     };
     var userdictionary = {'key1': "value1"};
- *
  */
 
-function makeXMLHttpRequestForArrayBufferWithTypedArrayNoDelimiters(url, successCallback, errorCallback, createPROTOMessages, timeoutMillis) {
-    var useArrayBuffer = true;
-    var typedArrayCallback = function(response) {
-        typedArrayHandlerNoDelimiters(response, successCallback, errorCallback, createPROTOMessages);
-    }
-    _makeXMLHttpRequest(url, typedArrayCallback, errorCallback, useArrayBuffer, timeoutMillis);
-}
 function makeXMLHttpRequestForArrayBufferWithTypedArray(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var useArrayBuffer = true;
     var typedArrayCallback = function(response) {
-        typedArrayHandler(response, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
+        readTypedArrayMessagesWithGPBDelimiters(response, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
     }
     _makeXMLHttpRequest(url, typedArrayCallback, errorHandle, useArrayBuffer, timeoutMillis);
 }
-
-function makeXMLHttpRequestWithoutArrayBufferNoDelimiters(url, successCallback, errorCallback, createPROTOMessages, timeoutMillis) {
+function makeXMLHttpRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var useArrayBuffer = false;
     var stringCallback = function(responseText) {
-        readResponseStringMessagesNoDelimiters(responseText, successCallback, errorCallback, createPROTOMessages);
-    }
-    _makeXMLHttpRequest(url, stringCallback, errorCallback, useArrayBuffer, timeoutMillis);
-}
-function makeXMLHttpRequestWithoutArrayBuffer(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
-    var useArrayBuffer = false;
-    var stringCallback = function(responseText) {
-        readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
+        readStringMessagesWithGPBDelimiters(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
     }
     _makeXMLHttpRequest(url, stringCallback, errorHandle, useArrayBuffer, timeoutMillis);
 }
-
-function makeXDomainRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages, timeoutMillis) {
-    var stringCallback = function(responseText) {
-        readResponseStringMessagesNoDelimiters(responseText, successCallback, errorCallback, createPROTOMessages);
-    }
-    _makeXDomainRequest(url, stringCallback, errorCallback, timeoutMillis);
+function makeSynchronousXMLHttpRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary) {
+    var useArrayBuffer = false;
+    var responseText = _makeSyncXMLHttpRequest(url, errorHandle, useArrayBuffer);
+    readStringMessagesWithGPBDelimiters(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
 }
+
+
 function makeXDomainRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var stringCallback = function(responseText) {
-        readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
+        readStringMessagesWithGPBDelimiters(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
     }
     _makeXDomainRequest(url, stringCallback, errorHandle, timeoutMillis);
 }
-
-function makeActiveXObjectRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages, timeoutMillis) {
+function makeBinaryActiveXObjectRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var stringCallback = function(responseText) {
-        readResponseStringMessagesNoDelimiters(responseText, successCallback, errorCallback, createPROTOMessages);
+        readStringMessagesWithGPBDelimiters(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
     }
-    _makeActiveXObjectRequest(url, stringCallback, errorCallback, timeoutMillis);
-}
-function makeActiveXObjectRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
-    var stringCallback = function(responseText) {
-        readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
-    }
-    _makeActiveXObjectRequest(url, stringCallback, errorHandle, timeoutMillis);
+    var useBinary = true;
+    _makeActiveXObjectRequest(url, stringCallback, errorHandle, timeoutMillis, useBinary);
 }
 
-function makeSyncXMLHttpRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages) {
-    var useArrayBuffer = false;
-    var responseText = _makeSyncXMLHttpRequest(url, errorCallback, useArrayBuffer);
-    readResponseStringMessagesNoDelimiters(responseText, successCallback, errorCallback, createPROTOMessages);
-}
-function makeSyncXMLHttpRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary) {
-    var useArrayBuffer = false;
-    var responseText = _makeSyncXMLHttpRequest(url, errorHandle, useArrayBuffer);
-    readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
-}
 
-function makeSyncActiveXObjectRequestNoDelimiters(url, successCallback, errorCallback, createPROTOMessages) {
-    var useArrayBuffer = false;
-    var responseText = _makeSyncActiveXObjectRequest(url, errorCallback, useArrayBuffer, createPROTOMessages);
-    readResponseStringMessagesNoDelimiters(responseText, successCallback, errorCallback, createPROTOMessages);
-}
-function makeSyncActiveXObjectRequest(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary) {
-    var useArrayBuffer = false;
-    var responseText = _makeSyncActiveXObjectRequest(url, errorHandle, useArrayBuffer, createPROTOMessage);
-    readMessagesFromBinaryString(responseText, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
-}
-
-/***   functions below here are support for the public messages above  ***/
-function typedArrayHandlerNoDelimiters(response, successCallback, errorCallback, createPROTOMessages) {
-    var msgUint8Array;
-    try {
-        msgUint8Array = new Uint8Array(response);
-        readTypedArrayMessagesNoDelimiters(msgUint8Array, successCallback, errorCallback, createPROTOMessages);
-    } catch(e) {
-        errorCallback(e.message);
-    }
-}
-function typedArrayHandler(response, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary) {
-    var msgUint8Array;
-    try {
-        msgUint8Array = new Uint8Array(response);
-        readMessagesFromUint8Array(msgUint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
-    } catch(e) {
-        errorHandle(e.message);
-    }
-}
-function readTypedArrayMessagesNoDelimiters(msgUint8Array, cb, errCB, createPROTOMessageHandle) {
+function readTypedArrayMessagesWithGPBDelimiters(msgUint8Array, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary) {
     if (msgUint8Array == undefined) {
-        errCB('msgUint8Array cannot be undefined');
+        errorHandle('msgUint8Array cannot be undefined');
         return;
     }
     var array = new Array(msgUint8Array.byteLength);
@@ -162,18 +117,10 @@ function readTypedArrayMessagesNoDelimiters(msgUint8Array, cb, errCB, createPROT
     for (j = 0; j < msgUint8Array.byteLength; j++) {
         array[j] = msgUint8Array[j];
     }
-
-    try {
-        var decodedmsgs = createPROTOMessageHandle();
-        var stream = new PROTO.ByteArrayStream(array);
-        decodedmsgs.ParseFromStream(stream);
-        cb(decodedmsgs);
-    } catch(e) {
-        errCB(e.message);
-    }
+    readResponseMessagesContainingGPBDelimiters(array, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
 }
 
-function readResponseStringMessagesNoDelimiters(str, cback, ecback, createPROTOMessageHandle) {
+function readStringMessagesWithGPBDelimiters(str, createPROTOMessageHandle, pmcback, cback, ecback, userdictionary) {
     if (str == undefined) {
         ecback('str cannot be undefined');
         return;
@@ -185,14 +132,48 @@ function readResponseStringMessagesNoDelimiters(str, cback, ecback, createPROTOM
         var b = c & 0xff;
         array[j] = b;
     }
-    try {
-        var decodedmsgs = createPROTOMessageHandle();
-        var stream = new PROTO.ByteArrayStream(array);
-        decodedmsgs.ParseFromStream(stream);
-        cback(decodedmsgs);
-    } catch(e) {
-        ecback(e.message);
+    readResponseMessagesContainingGPBDelimiters(array, createPROTOMessageHandle, pmcback, cback, ecback, userdictionary);
+}
+
+function readResponseMessagesContainingGPBDelimiters(array, createPROTOMessageHandle, pmcback, cback, ecback, userdictionary) {
+    if (array == undefined) {
+        ecback('array cannot be undefined');
+        return;
     }
+    var totnum = array.length;
+    var offset = 0;
+
+    while (offset < totnum) {
+        try {
+            var stream = new PROTO.ByteArrayStream( array.slice(offset, array.length) );
+            var msgLength = PROTO.int32.ParseFromStream(stream);
+            offset = offset + stream.read_pos_;
+
+            var msgArray = array.slice(offset, offset + msgLength);
+            offset = offset + msgLength;
+
+            var decodedmsg = readMessage(createPROTOMessageHandle, msgArray);
+
+            if (decodedmsg != undefined) {
+                pmcback(decodedmsg, userdictionary);
+            }
+        } catch (e) {
+
+        }
+    }
+    cback(userdictionary);
+}
+
+function readMessage(createPROTOMessageHandle, msgArray) {
+    var decodedmsg;
+    try {
+        decodedmsg = createPROTOMessageHandle();
+        var msgStream = new PROTO.ByteArrayStream(msgArray);
+        decodedmsg.ParseFromStream(msgStream);
+    } catch(e) {
+
+    }
+    return decodedmsg;
 }
 
 function _makeXMLHttpRequest(url, successCallback, errorCallback, useArrayBuffer, timeoutMillis) {
@@ -219,7 +200,6 @@ function _makeXMLHttpRequest(url, successCallback, errorCallback, useArrayBuffer
         var receivedResponse = false;
 
         xhr.onreadystatechange = function() {
-            var x = xhr;
             if (xhr.readyState == 4) {
                 clearInterval(timerId);
                 if (xhr.status == '200') {
@@ -260,19 +240,19 @@ function _makeXDomainRequest(url, successCallback, errorCallback, timeoutMillis)
         try {
             xhr = new XDomainRequest();
 
+            xhr.contentType = 'text/plain; charset=x-user-defined';
+
             xhr.onerror = function(e){
                 var msg = xhr.responseText;
                 errorCallback( msg );
             };
 
             var count=0;
-            xhr.onprogress = function() {
-                var x = xhr;
+            xhr.onprogress = function() { /* needed for xdomainrequest*/
                 count++;
             };
 
             xhr.onload = function() {
-                var x = xhr;
                 var responseText;
                 try {
                     responseText = xhr.responseText;
@@ -286,16 +266,21 @@ function _makeXDomainRequest(url, successCallback, errorCallback, timeoutMillis)
                 successCallback(responseText);
             };
 
-            xhr.contentType = 'text/plain; charset=x-user-defined';
-
             xhr.timeout = timeoutMillis;
-
-            xhr.open('GET', url);
 
             xhr.ontimeout = function () {
                 xhr.abort();
                 errorCallback( 'request timed out');
             }
+
+            /* to prevent caching by front-end server */
+            if (url.match(/\?/)) {
+                url = url + "&t=" + (new Date()).getTime();
+            } else {
+                url = url + "?t=" + (new Date()).getTime();
+            }
+
+            xhr.open('GET', url);
 
             xhr.send();
 
@@ -308,7 +293,7 @@ function _makeXDomainRequest(url, successCallback, errorCallback, timeoutMillis)
     }
 }
 
-function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutMillis) {
+function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutMillis, useBinary) {
     var timerId;
     var clearedInterval = false;
 
@@ -319,8 +304,8 @@ function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutM
     var xhr;
 
     try {
-        var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP",
-            "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.3.0","Msxml2.XMLHTTP.4.0"];
+        var activexmodes=["Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
+            "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"];
         if (window.ActiveXObject){
             for (var i=0; i < activexmodes.length; i++){
                 try {
@@ -334,52 +319,32 @@ function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutM
             throw new Error('Could not construct an ActiveXObject.');
         }
 
-        /* cannot use setRequestHeader in ie 9 ?
-        try{
-            xhr.setRequestHeader('text/plain; charset=x-user-defined');
-        } catch(e) {console.log('header: ' + e.message);}
-        */
-
         var async = true;
         xhr.open('GET', url, async); /* this needs to be before onreadystatchange*/
 
-        /* cannot use setRequestHeader in ie 9 ?
-        try{
-            xhr.setRequestHeader('text/plain; charset=x-user-defined');
-        } catch(e) {console.log('header: ' + e.message);}
-        */
-
         xhr.onreadystatechange = function() {
-            var x = xhr;
             if (xhr.readyState == 4) {
-                /*clearInterval(timerId);*/
+                clearInterval(timerId);
                 if (xhr.status == '200') {
                     var response = xhr.responseText;
-                    /*
-                    if ((response == undefined) || (response.length == 0) && (x.responseBody != undefined)) {
-                        response = x.responseBody;
-                        /* This is an IE native array of bytes not accessible by javascript, but accessible via
-                         * vbscript or jscript.  Using vbscript was cpu intense so didn't include it here, but here's a very helpful
-                         * page on how to do that:
-                         * http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
-                         *
-                         * Instead of using this method, will choose to always stream messages without delimiters
-                         * for IE requests.
-                         *
-                         * OR load from a file in the first place?
-                         *
-                         * var adTypeBinary = 1
 
-                            oStream = new ActiveXObject("ADODB.Stream");
-                            oStream.Type = adTypeBinary;
-                            oStream.Open;
+                    if (useBinary && (xhr.responseBody != undefined)) {
 
-                            oStream.LoadFromFile(filename);
-                            content = oStream.Read;
+                        var convertResponseBodyToText = function (binary) {
+                            var byteMapping = {};
+                            for ( var i = 0; i < 256; i++ ) {
+                                for ( var j = 0; j < 256; j++ ) {
+                                    byteMapping[ String.fromCharCode( i + j * 256 ) ] = String.fromCharCode(i) + String.fromCharCode(j);
+                                }
+                            }
+                            var rawBytes = IEBinaryToArray_ByteStr(binary);
+                            var lastChr = IEBinaryToArray_ByteStr_Last(binary);
+                            return rawBytes.replace(/[\s\S]/g,
+                                function( match ) { return byteMapping[match]; }) + lastChr;
+                        };
 
-                            oStream.Close;
-                            oStream = null;
-                    }*/
+                        response  = convertResponseBodyToText(xhr.responseBody);
+                    }
                     successCallback(response);
 
                 } else {
@@ -387,7 +352,7 @@ function _makeActiveXObjectRequest(url, successCallback, errorCallback, timeoutM
                 }
             }
         };
-/*
+/* if no-cache is failing in your system:
         if (url.match(/\?/)) {
             url = url + "&t=" + (new Date()).getTime();
         } else {
@@ -473,7 +438,7 @@ function _makeSyncXMLHttpRequest(url, errorCallback, useArrayBuffer) {
     }
 }
 
-function _makeSyncActiveXObjectRequest(url, errorCallback) {
+function _makeSyncActiveXObjectRequest(url, errorCallback, useBinary) {
     /* for use in web workers */
     try {
         var xhr;
@@ -505,7 +470,26 @@ function _makeSyncActiveXObjectRequest(url, errorCallback) {
         xhr.send();
 
         if (xhr.status == '200') {
-            return xhr.responseText;
+
+            if (useBinary && (xhr.responseBody != undefined)) {
+
+                var convertResponseBodyToText = function (binary) {
+                    var byteMapping = {};
+                    for ( var i = 0; i < 256; i++ ) {
+                        for ( var j = 0; j < 256; j++ ) {
+                            byteMapping[ String.fromCharCode( i + j * 256 ) ] = String.fromCharCode(i) + String.fromCharCode(j);
+                        }
+                    }
+                    var rawBytes = IEBinaryToArray_ByteStr(binary);
+                    var lastChr = IEBinaryToArray_ByteStr_Last(binary);
+                    return rawBytes.replace(/[\s\S]/g,
+                        function( match ) { return byteMapping[match]; }) + lastChr;
+                };
+
+                return convertResponseBodyToText(xhr.responseBody);
+            } else {
+                return xhr.responseText;
+            }
         }
         return xhr.statusText;
 
@@ -529,4 +513,5 @@ function _makeSyncActiveXObjectRequest(url, errorCallback) {
         }
         errorCallback(msg);
     }
+
 }

@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 public class GPBServletTest extends TestCase {
 
     private boolean isOnline = false;
-    
+
     public GPBServletTest() {
         super();
     }
@@ -46,18 +46,18 @@ public class GPBServletTest extends TestCase {
 
     @Test
     public void testGetMessages() throws Exception {
-        
+
         // there's a prepped database in the test resources directory for sanfrancisco that should be used
-        
+
         if (false & isOnline) {
-            
+
             HttpRequestSender sender = null;
-            
-            String path = "/gpb";
+
+            String path = "/gpbplus";
 
             BufferedInputStream inStream = null;
             InputStream in = null;
-            
+
             try {
                 String url = "http://127.0.0.1:8080" + path;
 
@@ -66,11 +66,11 @@ public class GPBServletTest extends TestCase {
                 in = sender.send();
 
                 inStream = new BufferedInputStream(in);
-            
+
                 int code = sender.getResponseCode().intValue();
                 if (code != 200)
                     fail(readStream(inStream));
-                            
+
                 assertTrue(code == 200);
 
                 /*
@@ -79,15 +79,15 @@ public class GPBServletTest extends TestCase {
                 int nRead = inStream.read(bytes, 0, bSize);
                 int a = 1;
                 */
-                
+
                 Builder builder = ExampleMsg.newBuilder();
-                
+
                 PBStreamReader streamReader = new PBStreamReader();
-                
+
                 List<ExampleMsg> messages = streamReader.read(inStream, builder);
                 assertNotNull(messages);
                 assertTrue(messages.size() > 0);
-                
+
             } catch (Throwable t) {
                 fail(t.getMessage());
             } finally {
@@ -106,9 +106,9 @@ public class GPBServletTest extends TestCase {
             }
         }
     }
-    
+
     public static boolean isOnline() {
-   
+
         String urlString = "http://localhost:8080/";
 
         boolean isOnline = false;
@@ -147,7 +147,7 @@ public class GPBServletTest extends TestCase {
     }
 
     private String readStream(BufferedInputStream inStream) throws IOException {
-        
+
         StringBuffer sb = new StringBuffer();
         int bf = 256;
         byte[] bytes = new byte[bf];
@@ -155,7 +155,7 @@ public class GPBServletTest extends TestCase {
             String line = new String(bytes, "UTF-8");
             sb.append(line);
         }
-        
+
         return sb.toString();
     }
 }

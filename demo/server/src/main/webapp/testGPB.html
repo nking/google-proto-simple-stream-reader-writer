@@ -11,19 +11,35 @@
         <script type="text/javascript" src="/js/googleProtocolBufferMessagesAjaxHelper.js"></script>
         <script type="text/javascript" src="/js/examplemessage.proto.js"></script>
 
+        <!-- from http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/ -->
+        <!--[if IE]>
+            <script type="text/vbscript">
+                Function IEBinaryToArray_ByteStr(Binary)
+                    IEBinaryToArray_ByteStr = CStr(Binary)
+                End Function
+                Function IEBinaryToArray_ByteStr_Last(Binary)
+                    Dim lastIndex
+                    lastIndex = LenB(Binary)
+                    if lastIndex mod 2 Then
+                        IEBinaryToArray_ByteStr_Last = Chr( AscB( MidB( Binary, lastIndex, 1 ) ) )
+                    Else
+                        IEBinaryToArray_ByteStr_Last = ""
+                    End If
+                End Function
+            </script>
+
+        <![endif]-->
+
         <script>
-            var gpburl = "http://localhost:8080/gpb";
-
+            var gpburl = "http://127.0.0.1:8080/gpb"; /*match your LAN or desktop server IP address*/
             var retryCount = 0;
-            var timeoutInMillis = 15000;
+            var timeoutInMillis = 10000;
 
-            var createYourPROTOMessage1 = function() {
-                return new com.climbwithyourfeet.proto.ExampleMessages;
-            };
-            var createYourPROTOMessage2 = function() {
-                return new com.climbwithyourfeet.proto.ExampleMsg;
-            };
-
+            function printComment(testNumber, comment) {
+                writeToElement.innerHTML = writeToElement.innerHTML
+                    + "<br/>(" + testNumber + "), "
+                    + "<e style='color:grey;'>" + comment + "</e>";
+            }
             function printPass(testNumber, testDesc) {
                 writeToElement.innerHTML = writeToElement.innerHTML
                     + "<br/>(" + testNumber + "), "
@@ -36,55 +52,40 @@
                     + "<b style='color:red;'>; ERROR:" + msg + "</b>";
             }
 
+
+            var createYourPROTOMessage = function() {
+                return new com.climbwithyourfeet.proto.ExampleMsg;
+            };
+
+            var utf8Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('UTF-8');
+            var utf7Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('UTF-7');
+            var iso88591Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('ISO-8859-1');
+            var utf8OctetStream = 'ct='+ window.encodeURIComponent('application/octet-stream') + '&ec=' + window.encodeURIComponent('UTF-8');
+
             $(document).ready(function() {
 
                 var testNumber = 0;
 
                 writeToElement.innerHTML = "<br/><b>[" + navigator.userAgent + "]</b>";
 
-                asyncTest("makeXMLHttpRequestForArrayBufferWithTypedArray (no delimiters)", function() {
+                /* functions to invoke requests with variations on the ajax method, the javascript data type,
+                 * the server content type and server character encoding */
+
+                function req3(testDesc, url, fnc) {
                     testNumber++;
-                    var testDesc = 'XMLHttpRequest + ArrayBuffer + text + TypedArray + (no delimiters)';
                     expect( 1 );
+
+                    var printCallback = function(msg) {
+                        printComment(testNumber, msg);
+                    }
 
                     var successCallback = function(messages) {
                         start();
-                        var pass = (messages != undefined) && (messages.msg != undefined);
-                        pass = pass && (messages.msg.length > 0);
-                        var pbMessage = messages.msg[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
+                        var pass = (messages != undefined);
+                        pass = pass && (messages.length > 0);
                         ok(pass, 'request and deserialization worked');
                         if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
-                    try {
-                        makeXMLHttpRequestForArrayBufferWithTypedArrayNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                asyncTest("makeXMLHttpRequestWithoutArrayBuffer (no delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XMLHttpRequest + text + (no delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        start();
-                        var pass = (messages != undefined) && (messages.msg != undefined);
-                        pass = pass && (messages.msg.length > 0);
-                        var pbMessage = messages.msg[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
+                            printCallback('last message=' + messages[messages.length-1]);
                             printPass(testNumber, testDesc);
                         } else {
                             printFail(testNumber, testDesc, 'deserialized msg missing properties');
@@ -96,407 +97,49 @@
                         printFail(testNumber, testDesc, msg);
                     }
 
+                    var m = [];
+                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
+                        m.push(gpbMessage);
+                    };
+                    var completedCallback = function deserializationIsDone(dictionary) {
+                        printCallback('Completed.  passing ' + m.length + ' messages');
+                        successCallback(m);
+                    };
+                    var errorHandle = function(errorString, dictionary) {
+                        errorCallback(errorString);
+                    };
+                    var userdictionary = {'key': "key"};
+
                     try {
-                        makeXMLHttpRequestWithoutArrayBufferNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
+                        fnc(url, createYourPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
                     } catch(e) {
                         errorCallback(e.message);
                     }
-                });
-
-                asyncTest("makeXDomainRequest (no delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XDomainRequest + text + (no delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        start();
-                        var pass = (messages != undefined) && (messages.msg != undefined);
-                        pass = pass && (messages.msg.length > 0);
-                        var pbMessage = messages.msg[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
-
-                    try {
-                        makeXDomainRequestNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                asyncTest("makeActiveXObjectRequest (no delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'ActiveXObjectRequest + text + (no delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        start();
-                        var pass = (messages != undefined) && (messages.msg != undefined);
-                        pass = pass && (messages.msg.length > 0);
-                        var pbMessage = messages.msg[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
-
-                    try {
-                        makeActiveXObjectRequestNoDelimiters(gpburl + '?useDelimiters=false',
-                            successCallback, errorCallback, createYourPROTOMessage1, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                asyncTest("makeXMLHttpRequestSync (no delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XMLHttpRequest + synchronous + text + (no delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        start();
-                        var pass = (messages != undefined) && (messages.msg != undefined);
-                        pass = pass && (messages.msg.length > 0);
-                        var pbMessage = messages.msg[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
-
-                    try {
-                        makeSyncXMLHttpRequestNoDelimiters(gpburl + '?useDelimiters=false', successCallback, errorCallback, createYourPROTOMessage1);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                asyncTest("makeSyncActiveXObjectRequest (no delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'ActiveXObject + synchronous + text + (no delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        start();
-                        var pass = (messages != undefined) && (messages.msg != undefined);
-                        pass = pass && (messages.msg.length > 0);
-                        var pbMessage = messages.msg[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
-
-                    try {
-                        makeSyncActiveXObjectRequestNoDelimiters(gpburl + '?useDelimiters=false&c=' + (new Date()).getTime(),
-                            successCallback, errorCallback, createYourPROTOMessage1);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
+                }
 
                 asyncTest("makeXMLHttpRequestForArrayBufferWithTypedArray (w/ delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XMLHttpRequest + ArrayBuffer + text + TypedArray + (w/ delimiters)';
-                    expect( 1 );
+                    req3('XMLHttpRequest + ArrayBuffer + TypedArray + (w/ delimiters) + utf8 + octet-stream',
+                    gpburl + '?' + utf8OctetStream, makeXMLHttpRequestForArrayBufferWithTypedArray)});
 
-                    var successCallback = function(messages) {
-                        start();
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
+                asyncTest("makeXMLHttpRequest (w/ delimiters)", function() {
+                    req3('XMLHttpRequest + (w/ delimiters) + utf8 + octet-stream',
+                    gpburl + '?' + utf8OctetStream, makeXMLHttpRequest)});
 
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
+                asyncTest("makeXMLHttpRequestSync (no delimiters)", function() {
+                    req3('XMLHttpRequest + synchronous +  (no delimiters) + utf8 + octet-stream',
+                    gpburl + '?' + utf8OctetStream, makeSynchronousXMLHttpRequest)});
 
-                    var m = [];
-                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
-                        m.push(gpbMessage);
-                    };
-                    var completedCallback = function deserializationIsDone(dictionary) {
-                        successCallback(m);
-                    };
-                    var errorHandle = function(errorString, dictionary) {
-                        errorCallback(errorString);
-                    };
-                    var userdictionary = {'key': "key"};
+                /* works for ie9 */
+                asyncTest("makeXDomainRequest (w/ delimiters)", function(){
+                    req3('XDomainRequest + (w/ delimiters) + utf7 + text',
+                    gpburl + '?' + utf7Text, makeXDomainRequest)});
 
-                    try {
-                        makeXMLHttpRequestForArrayBufferWithTypedArray(gpburl, createYourPROTOMessage2,
-                            perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                asyncTest("makeXMLHttpRequestWithoutArrayBuffer (w/ delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XMLHttpRequest + text + (w/ delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                        start();
-                    }
-                    var errorCallback = function(msg) {
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                        start();
-                    }
-
-                    var m = [];
-                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
-                        m.push(gpbMessage);
-                    };
-                    var completedCallback = function deserializationIsDone(dictionary) {
-                        successCallback(m);
-                    };
-                    var errorHandle = function(errorString, dictionary) {
-                        errorCallback(errorString);
-                    };
-                    var userdictionary = {'key': "key"};
-
-                    try {
-                        makeXMLHttpRequestWithoutArrayBuffer(gpburl, createYourPROTOMessage2,
-                            perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                asyncTest("makeXDomainRequest (w/ delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XDomainRequest + text + (w/ delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                        start();
-                    }
-                    var errorCallback = function(msg) {
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                        start();
-                    }
-
-                    var m = [];
-                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
-                        m.push(gpbMessage);
-                    };
-                    var completedCallback = function deserializationIsDone(dictionary) {
-                        successCallback(m);
-                    };
-                    var errorHandle = function(errorString, dictionary) {
-                        errorCallback(errorString);
-                    };
-                    var userdictionary = {'key': "key"};
-
-                    try {
-                        makeXDomainRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
+                /* works for ie6-ie8 */
                 asyncTest("makeActiveXObjectRequest (w/ delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'ActiveXObjectRequest + text + (w/ delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                        start();
-                    }
-                    var errorCallback = function(msg) {
-                        start();
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                    }
-
-                    var m = [];
-                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
-                        m.push(gpbMessage);
-                    };
-                    var completedCallback = function deserializationIsDone(dictionary) {
-                        successCallback(m);
-                    };
-                    var errorHandle = function(errorString, dictionary) {
-                        errorCallback(errorString);
-                    };
-                    var userdictionary = {'key': "key"};
-
-                    try {
-                        makeActiveXObjectRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                test("makeXMLHttpRequestSync (w/ delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'XMLHttpRequest + synchronous + text + (w/ delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                        start();
-                    }
-                    var errorCallback = function(msg) {
-
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                        start();
-                    }
-
-                    var m = [];
-                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
-                        m.push(gpbMessage);
-                    };
-                    var completedCallback = function deserializationIsDone(dictionary) {
-                        successCallback(m);
-                    };
-                    var errorHandle = function(errorString, dictionary) {
-                        errorCallback(errorString);
-                    };
-                    var userdictionary = {'key': "key"};
-
-                    try {
-                        makeSyncXMLHttpRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
-
-                test("makeSyncActiveXObjectRequest (w/ delimiters)", function() {
-                    testNumber++;
-                    var testDesc = 'ActiveXObject + synchronous + text + (w/ delimiters)';
-                    expect( 1 );
-
-                    var successCallback = function(messages) {
-
-                        var pass = (messages != undefined);
-                        pass = pass && (messages.length > 0);
-                        var pbMessage = messages[0];
-                        pass = pass && (pbMessage.name != undefined) && (pbMessage.value != undefined) && (pbMessage.code != undefined);
-                        ok(pass, 'request and deserialization worked');
-                        if (pass) {
-                            printPass(testNumber, testDesc);
-                        } else {
-                            printFail(testNumber, testDesc, 'deserialized msg missing properties');
-                        }
-                        start();
-                    }
-                    var errorCallback = function(msg) {
-
-                        ok(false, 'failed for request and parse');
-                        printFail(testNumber, testDesc, msg);
-                        start();
-                    }
-
-                    var m = [];
-                    var perMessageCallback = function renderEvent(gpbMessage, dictionary) {
-                        m.push(gpbMessage);
-                    };
-                    var completedCallback = function deserializationIsDone(dictionary) {
-                        successCallback(m);
-                    };
-                    var errorHandle = function(errorString, dictionary) {
-                        errorCallback(errorString);
-                    };
-                    var userdictionary = {'key': "key"};
-
-                    try {
-                        makeSyncActiveXObjectRequest(gpburl, createYourPROTOMessage2, perMessageCallback, completedCallback, errorHandle, userdictionary);
-                    } catch(e) {
-                        errorCallback(e.message);
-                    }
-                });
+                    req3('ActiveXObjectRequest + (w/ delimiters) + octet-stream + utf8',
+                    gpburl + '?' + utf8OctetStream, makeBinaryActiveXObjectRequest)});
             });
-
         </script>
-
     </head>
     <body>
         <h1 id="qunit-header">QUnit test for Javascript Google Protocol Buffer libraries</h1>
