@@ -14,7 +14,7 @@
 *    -- For IE9, this combination works:
 *       server settings:
 *            content-type=octet/stream
-*            character encoding=UTF-7 <==
+*            character encoding=UTF-7
 *       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
 *       and client AJAX being XDomainRequest
 *
@@ -31,6 +31,7 @@
 *            character encoding=UTF-8
 *       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
 *       and client being XMLHttpRequest (but don't use arrayBuffer setting)
+*
 *
 *
 * The generated messages are Google Protocol Buffer messages, whose templates
@@ -74,7 +75,12 @@
 function makeXMLHttpRequestForArrayBufferWithTypedArray(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var useArrayBuffer = true;
     var typedArrayCallback = function(response) {
-        readTypedArrayMessagesWithGPBDelimiters(response, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
+        try {
+            var msgUInt8Array = new Uint8Array(response);
+            readTypedArrayMessagesWithGPBDelimiters(msgUInt8Array, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
+        } catch (e) {
+            errorHandle(e, userdictionary);
+        }
     }
     _makeXMLHttpRequest(url, typedArrayCallback, errorHandle, useArrayBuffer, timeoutMillis);
 }
@@ -113,9 +119,9 @@ function readTypedArrayMessagesWithGPBDelimiters(msgUint8Array, createPROTOMessa
         return;
     }
     var array = new Array(msgUint8Array.byteLength);
-    var j;
-    for (j = 0; j < msgUint8Array.byteLength; j++) {
-        array[j] = msgUint8Array[j];
+    for (var j = 0; j < msgUint8Array.byteLength; j++) {
+        var b = msgUint8Array[j];
+        array[j] = b;
     }
     readResponseMessagesContainingGPBDelimiters(array, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary);
 }
@@ -149,13 +155,17 @@ function readResponseMessagesContainingGPBDelimiters(array, createPROTOMessageHa
             var msgLength = PROTO.int32.ParseFromStream(stream);
             offset = offset + stream.read_pos_;
 
-            var msgArray = array.slice(offset, offset + msgLength);
-            offset = offset + msgLength;
+            if (msgLength > 0) {
+                var msgArray = array.slice(offset, offset + msgLength);
+                offset = offset + msgLength;
 
-            var decodedmsg = readMessage(createPROTOMessageHandle, msgArray);
+                var decodedmsg = readMessage(createPROTOMessageHandle, msgArray);
 
-            if (decodedmsg != undefined) {
-                pmcback(decodedmsg, userdictionary);
+                if (decodedmsg != undefined) {
+                    pmcback(decodedmsg, userdictionary);
+                }
+            } else {
+                break;
             }
         } catch (e) {
 
