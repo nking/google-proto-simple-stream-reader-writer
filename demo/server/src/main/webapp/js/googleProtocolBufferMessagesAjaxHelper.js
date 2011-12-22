@@ -49,7 +49,7 @@
 * to deserialize the messages.
 *
 * Note that the ActiveXObject function below needs this bit of vbscript added to your html header:
-* 
+*
         <!-- from http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/ -->
         <!--[if IE]>
             <script type="text/vbscript">
@@ -92,7 +92,7 @@
         your code
     };
     var userdictionary = {'key1': "value1"};
- */
+*/
 
 function makeXMLHttpRequestForArrayBufferWithTypedArray(url, createPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutMillis) {
     var useArrayBuffer = true;

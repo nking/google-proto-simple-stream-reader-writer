@@ -2,6 +2,11 @@ A Java and Javascript library to read and write Google Protocol Buffer messages
 to input and output streams using delimiters between messages to aid message-by-message 
 rendering.  Includes a demo project of java server streaming messages over the wire and
 java and javascript clients reading the messages.
+
+For a javascript client, you'll also need 2 files from http://github.com/sirikata/protojs
+   protobuf.js
+   pbj.js
+    
 -----------------------------------------------------------------------------------
 To build:
    mvn clean compile package
