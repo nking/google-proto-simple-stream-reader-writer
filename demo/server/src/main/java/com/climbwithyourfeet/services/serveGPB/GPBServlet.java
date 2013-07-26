@@ -3,8 +3,6 @@ package com.climbwithyourfeet.services.serveGPB;
 import com.climbwithyourfeet.proto.ExampleMessageProto;
 import com.climbwithyourfeet.proto.ExampleMessageProto.ExampleMessages;
 import com.climbwithyourfeet.proto.ExampleMessageProto.ExampleMsg;
-import com.google.code.proto.streamio.*;
-import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessage;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -20,17 +18,19 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Serves Google Protocol Buffer Messages.  Default settings serve the Google Protocol
- * Buffer messages with built-in delimiters and content-type ""octet-stream" and
+ * Buffer messages with their built-in delimiters and content-type ""octet-stream" and
  * character encoding "UTF-8".
  *
  * Servlet accepts the following optional parameters:
+ * <code>
  *   useComposite = true
  *   ct = text/plain
  *   ct = octet-stream
  *   ec = UTF-7
  *   ec = UTF-8
  *   ec = ISO-8859-1
- *
+ *</code>
+ * 
  * @author nichole
  */
 public class GPBServlet extends HttpServlet {

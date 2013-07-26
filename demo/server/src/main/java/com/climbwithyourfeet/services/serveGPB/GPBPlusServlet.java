@@ -27,6 +27,16 @@ import javax.servlet.http.HttpServletResponse;
  * marker is the control character null (0) and the remaining 4 bytes hold the message
  * size which is fine for text.)
  *
+ * Servlet accepts the following optional parameters:
+ * <code>
+ *   useComposite = true
+ *   ct = text/plain
+ *   ct = octet-stream
+ *   ec = UTF-7
+ *   ec = UTF-8
+ *   ec = ISO-8859-1
+ *</code>
+ *
  * @author nichole
  */
 public class GPBPlusServlet extends HttpServlet {

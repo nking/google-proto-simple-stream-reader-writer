@@ -33,19 +33,6 @@
             </releases>
         </repository>
         <repository>
-            <id>DataNucleus_Repos2</id>
-            <name>DataNucleus Repository</name>
-            <url>http://www.datanucleus.org/downloads/maven2</url>
-        </repository>
-    <!--
-        <repository>
-            <id>central (2)</id>
-            <name>central repository (2)</name>
-            <url>http://repo2.maven.org/maven2</url>
-            <layout>legacy</layout>
-        </repository>
-    -->
-        <repository>
             <id>central</id>
             <name>central repository (2)</name>
             <url>http://repo1.maven.org/maven2</url>
@@ -75,7 +62,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>2.0.2</version>
+                    <version>3.1</version>
                     <configuration>
                         <source>${java.source.version}</source>
                         <target>${java.target.version}</target>

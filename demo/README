@@ -1,24 +1,75 @@
-Demo server and clients for Google Protocol Buffer messages with and without the use of
-delimiters (delimiters aid message-by-message rendering).
-The server streams the messages over http and the clients read them.  The clients are
-java and javascript clients and the server is java.
+The demo shows streaming a Google Protocol Buffer message from a java web application
+hosted by Google's Appengine.
 
-For delimiter choices, methods exist for using the built-in methods for google protocol
-buffers or the external delimiters available in this project.
+The two urls /gbp and /gbplus accept parameters to specifiy the encoding returned and
+to specify whether to use delimiters between messages or not.
+The parameters are:
+   -- useComposite
+      values are true or false
+      default is true
+   -- ct
+      values are text/plain or octet-stream 
+      default is application/octet-stream
+   -- et
+      values are UTF-7 or UTF-8 or ISO-8859-1
+      default is UTF-8
+
+The encoding choices are important and browser dependent if you're client is javascript.
+The encoding choices can also be dependent upon whether the client is hosted at the
+same domain or whether the client is sharing resources with the server using CORS.
+See the wiki page for the project for advice.
+    https://code.google.com/p/google-proto-simple-stream-reader-writer/wiki/usage
+AND see the results for the javascript unit tests in file ajax_tests.pdf to see which
+encoding "passed".
+
+
+
+The clients are demonstrated in the tests and they are for languages java and javascript.
+
+-----------------------
 
 (1) To build:
-   mvn clean compile package
+   -- edit the elements <appengine.api.version> in the pom.xml files to equal your appengine SDK version
+      files are pom.xml, dataModel/pom.xml, and server/pom.xml
+
+   -- install the appengine jars.  some are not available online, so an install script for posix systems
+      is included as a workaround.  
+      to use it:
+          set the environment variable GOOGLE_APPS_ENGINE_HOME
+          run this from the command line:
+              ./init_forsdk1811.sh
+
+   -- run from the command line:
+       mvn clean package
 
 (2) Deploy the built webapp to your local development appengine 
     (can download appengine at http://code.google.com/appengine/downloads.html)
-    The built webapp for this project is at demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
-    and should be deployed to the appengine servlet container
+    The built webapp, that is the war directory, can be found relative to
+        the base project at demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
+
+    cd $GOOGLE_APPS_ENGINE_HOME
+    ./bin/dev_appserver.sh project_war_dir
     
-(3) After deployment, dial http://localhost:8080/testGB.html in your browser to run the unit test.  
+(3) After deployment, dial http://127.0.0.1:8080//testGPB.html in your browser to run the unit test.  
+    Note that if you use a different url, you'll have to edit the javascript variable gpburl.
+
+    Note also that not all tests will pass for a given browser.  The tests were written to
+    run in different browser and domain combinations to find the right encodings.
 
 The javascript unit test is testGPB.html and includes best usages for different clients and the native delimiters.
+
 The java unit tests show client usage and can be seen at
    demo/server/src/test/java/com/climbwithyourfeet/services/serveGPB
+
 and there's another servlet hosting alternative delimiters.
+
 The java unit tests can be run from the project base directory with the command 'mvn test' while the
 application is deployed to localhost:8080
+
+------
+
+If you want to make your own protocol buffer, you can compile it using the profile compile_protocol_buffers
+   mvn clean package -Pcompile_protocol_buffers
+
+   Thereafter it will have generated the java file from your .proto file so no need to use the profile flag again.
+
