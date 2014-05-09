@@ -46,7 +46,7 @@ The servlet that responds to /gpb requests is
 server/src/main/java/com/climbwithyourfeet/services/serveGPB/GPBServlet.java
 
    There, you can add to method initSharedDomains() your domain.  That's needed
-   for IE10 to succeed if you're not using these with the localhost trust domain.
+   for IE10 to succeed if you're not using these within the localhost trust domain.
 
 
 The two urls /gbp and /gbplus accept parameters to specify the encoding returned and
