@@ -15,7 +15,8 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
      /**
      * Convert the integer into a byte array composed of byte shifted parts of the integer.
      * The byte array has been restricted to the signed portion to accommodate clients
-     * that can only process strings (ascii being 0-127).
+     * that can only process strings
+     * (ascii being 0-127.  extended ascii is 128-255 but not all clients can read that).
      *
      * @param sz the integer to be represented by the returned byte array
      * @return

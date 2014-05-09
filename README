@@ -1,7 +1,8 @@
 A Java and Javascript library to read and write Google Protocol Buffer messages 
 to input and output streams using delimiters between messages to aid message-by-message 
-rendering.  Includes a demo project of java server streaming messages over the wire and
-java and javascript clients reading the messages.
+rendering.  Includes a demo project of using this within the Google appengine java web server 
+streaming messages over the wire and tests that demonstrate java and javascript clients 
+that reading the messages.
 
 For a javascript client, you'll also need 2 files from http://github.com/sirikata/protojs
    protobuf.js
@@ -9,13 +10,15 @@ For a javascript client, you'll also need 2 files from http://github.com/sirikat
     
 -----------------------------------------------------------------------------------
 To build:
-   mvn clean compile package
+   mvn clean compile package  OR  mvn clean install
 the binary will ./target/gpb-stream-reader-writer-{version}.jar
 
 A demo server and client are provided in directory demo and a README is there with build and
 deploy instructions.  To build the demo:
    cd demo
-   mvn clean compile package
+   mvn clean package
+
+   there's a README file in demo directory to help with the build and deployment
 
 -----------------------------------------------------------------------------------
   Usage:

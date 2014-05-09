@@ -186,7 +186,7 @@
     <properties>
         <java.source.version>1.7</java.source.version>
         <java.target.version>1.7</java.target.version>
-        <appengine.api.version>1.8.1.1</appengine.api.version>
+        <appengine.api.version>1.9.3</appengine.api.version>
         <project.version>${project.version}</project.version>
     </properties>
 </project>

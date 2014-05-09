@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/html4/loose.dtd">
 <html>
     <head>
-        <script type="text/javascript" src="/js/jquery-1.6.4.min.js"></script>
+        <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
         <link rel="stylesheet" href="stylesheets/qunit.css" type="text/css" media="screen" />
         <script type="text/javascript" src="/js/qunit.js"></script>
         <script type="text/javascript" src="/js/protobuf.js"></script>
@@ -29,9 +29,13 @@
             </script>
 
         <![endif]-->
+        
+        <!--[if IE 10]>
+            <meta http-equiv="X-UA-Compatible" content="IE=9" />
+        <![endif]-->
 
         <script>
-            var gpburl = "http://127.0.0.1:8080/gpb"; /*match your LAN or desktop server IP address*/
+            var gpburl = "http://localhost:8080/gpb"; /*change to your domain name or IP address and ports*/
             var retryCount = 0;
             var timeoutInMillis = 10000;
 
@@ -60,6 +64,7 @@
             var utf8Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('UTF-8');
             var utf7Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('UTF-7');
             var iso88591Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('ISO-8859-1');
+            var windows1252Text = 'ct='+ window.encodeURIComponent('text/plain') + '&ec=' + window.encodeURIComponent('Windows-1252');
             var utf8OctetStream = 'ct='+ window.encodeURIComponent('application/octet-stream') + '&ec=' + window.encodeURIComponent('UTF-8');
 
             $(document).ready(function() {
@@ -111,33 +116,84 @@
                     var userdictionary = {'key': "key"};
 
                     try {
-                        fnc(url, createYourPROTOMessage, perMessageCallback, completedCallback, errorHandle, userdictionary, timeoutInMillis);
+                        fnc(url, createYourPROTOMessage, perMessageCallback, 
+                            completedCallback, errorHandle, userdictionary, timeoutInMillis);
                     } catch(e) {
                         errorCallback(e.message);
                     }
                 }
 
-                asyncTest("makeXMLHttpRequestForArrayBufferWithTypedArray (w/ delimiters)", function() {
-                    req3('XMLHttpRequest + ArrayBuffer + TypedArray + (w/ delimiters) + utf8 + octet-stream',
-                    gpburl + '?' + utf8OctetStream, makeXMLHttpRequestForArrayBufferWithTypedArray)});
+                // chrome, webkit, and mozilla handle utf8 octet-stream
+                var desc1 = 'XMLHttpRequest + ArrayBuffer + TypedArray + (w/ delimiters) + utf8 + octet-stream';
+                asyncTest(desc1, function() {
+                    req3(desc1, gpburl + '?' + utf8OctetStream, makeXMLHttpRequestForArrayBufferWithTypedArray)});
 
-                asyncTest("makeXMLHttpRequest (w/ delimiters)", function() {
-                    req3('XMLHttpRequest + (w/ delimiters) + utf8 + octet-stream',
-                    gpburl + '?' + utf8OctetStream, makeXMLHttpRequest)});
+                var desc2 = 'XMLHttpRequest + ArrayBuffer + TypedArray + (w/ delimiters, w/unicode chars) + utf8 + octet-stream';
+                asyncTest(desc2, function() {
+                    req3(desc2, gpburl + '?' + utf8OctetStream + '&u=true', makeXMLHttpRequestForArrayBufferWithTypedArray)});
+                
+                var desc3 = 'XMLHttpRequest + (w/ delimiters) + utf8 + octet-stream';
+                asyncTest(desc3, function() {
+                    req3(desc3, gpburl + '?' + utf8OctetStream, makeXMLHttpRequest)});
 
-                asyncTest("makeXMLHttpRequestSync (no delimiters)", function() {
-                    req3('XMLHttpRequest + synchronous +  (no delimiters) + utf8 + octet-stream',
-                    gpburl + '?' + utf8OctetStream, makeSynchronousXMLHttpRequest)});
+                var desc4 = 'XMLHttpRequest + (w/ delimiters, w/unicode chars) + utf8 + octet-stream';
+                asyncTest(desc4, function() {
+                    req3(desc4, gpburl + '?' + utf8OctetStream + '&u=true', makeXMLHttpRequest)});
+                
+                var desc5 = 'XMLHttpRequest + synchronous +  (w/ delimiters) + utf8 + octet-stream';
+                asyncTest(desc5, function() {
+                    req3(desc5, gpburl + '?' + utf8OctetStream, makeSynchronousXMLHttpRequest)});
+                
+                var desc6 = 'XMLHttpRequest + synchronous +  (w/ delimiters, w/unicode chars) + utf8 + octet-stream';
+                asyncTest(desc6, function() {
+                    req3(desc6, gpburl + '?' + utf8OctetStream + '&u=true', makeSynchronousXMLHttpRequest)});
+                
 
-                /* works for ie9 */
-                asyncTest("makeXDomainRequest (w/ delimiters)", function(){
-                    req3('XDomainRequest + (w/ delimiters) + utf7 + text',
-                    gpburl + '?' + utf7Text, makeXDomainRequest)});
+                //utf7 + text and XDomainRequest works for ie9
+                var desc7 = 'XDomainRequest + (w/ delimiters) + utf7 + text';
+                asyncTest(desc7, function() {
+                    req3(desc7, gpburl + '?' + utf7Text, makeXDomainRequest)});
+                
+                var desc8 = 'XDomainRequest + (w/ delimiters, w/unicode chars beware!) + utf7 + text';
+                asyncTest(desc8, function() {
+                    req3(desc8, gpburl + '?' + utf7Text + '&u=true', makeXDomainRequest)});
+                
+                var desc9 = 'XDomainRequest + (w/ delimiters) + utf8 + octet-stream';
+                asyncTest(desc9, function() {
+                    req3(desc9, gpburl + '?' + utf8OctetStream, makeXDomainRequest)});
+                
+                var desc10 = 'XDomainRequest + (w/ delimiters, w/unicode chars) + utf8 + octet-stream';
+                asyncTest(desc10, function() {
+                    req3(desc10, gpburl + '?' + utf8OctetStream + '&u=true', makeXDomainRequest)});
+                
+                var desc11 = 'XDomainRequest + (w/ delimiters) + Windows-1252 + text';
+                asyncTest(desc11, function() {
+                    req3(desc11, gpburl + '?' + windows1252Text, makeXDomainRequest)});
+                
+                var desc12 = 'XDomainRequest + (w/ delimiters, w/unicode chars) + Windows-1252 + text';
+                asyncTest(desc12, function() {
+                    req3(desc12, gpburl + '?' + windows1252Text + '&u=true', makeXDomainRequest)});
 
-                /* works for ie6-ie8 */
-                asyncTest("makeActiveXObjectRequest (w/ delimiters)", function() {
-                    req3('ActiveXObjectRequest + (w/ delimiters) + octet-stream + utf8',
-                    gpburl + '?' + utf8OctetStream, makeBinaryActiveXObjectRequest)});
+
+                //utf8 + octet-stream and ActiveXObjectRequest works for ie6-ie8 
+                var desc13 = 'ActiveXObjectRequest + (w/ delimiters) + utf8 + octet-stream';
+                asyncTest(desc13, function() {
+                    req3(desc13, gpburl + '?' + utf8OctetStream, makeBinaryActiveXObjectRequest)});
+                
+                var desc14 = 'ActiveXObjectRequest + (w/ delimiters, w/unicode chars) + utf8 + octet-stream';
+                asyncTest(desc14, function() {
+                    req3(desc14, gpburl + '?' + utf8OctetStream + '&u=true', makeBinaryActiveXObjectRequest)});
+                
+                // works for ie8 ?
+                var desc15 = 'ActiveXObjectRequest + (w/ delimiters) + Windows-1252 + text';
+                asyncTest(desc15, function() {
+                    req3(desc15, gpburl + '?' + windows1252Text, makeBinaryActiveXObjectRequest)});
+                
+                //  check for unicode characters
+                var desc16 = 'ActiveXObjectRequest + (w/ delimiters, w/unicode chars) + Windows-1252 + text';
+                asyncTest(desc16, function() {
+                    req3(desc16, gpburl + '?' + windows1252Text + '&u=true', makeBinaryActiveXObjectRequest)});
+                
             });
         </script>
     </head>

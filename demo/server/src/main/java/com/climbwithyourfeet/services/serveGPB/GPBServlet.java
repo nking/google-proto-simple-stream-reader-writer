@@ -29,6 +29,9 @@ import javax.servlet.http.HttpServletResponse;
  *   ec = UTF-7
  *   ec = UTF-8
  *   ec = ISO-8859-1
+ *   ec = Windows-1252
+ *   u  = true
+ *        to send unicode to distinguish between Windows1252 and ISO8859-1
  *</code>
  * 
  * @author nichole
@@ -40,9 +43,26 @@ public class GPBServlet extends HttpServlet {
     private transient Logger log = null;
 
     private final List<ExampleMessageProto.ExampleMsg> messages = new ArrayList<ExampleMsg>();
+    private final List<ExampleMessageProto.ExampleMsg> messagesWithUnicode = new ArrayList<ExampleMsg>();
 
     private List<String> sharedDomains = new ArrayList<String>();
 
+    /*
+    ISO-8859-1 differs from Windows-1252 in code points 128-159 (0x80-0x9F)
+    
+    dec  hex   w-1252     unicode    UTF-8 bytes      NCR
+                 hex        hex
+    
+    128	  80	U+00A4	   U+20AC	   E2  82  AC	 &#8364;  €	 &euro;	Euro Sign
+        This symbol is undefined in ISO-8859-1.
+    
+    158   9E    U+00B8     U+017E      C5  BE        &#382;   ž  &#x17E;  Latin Small Letter Z With Caron
+    
+    */
+    
+    private String windows1252Char1 = "\u20AC";
+    private String windows1252Char2 = "\u017E";
+    
     private String name1 = "Wallaroo";
     private String value1 = "A Wallaroo is any of three closely related species of moderately large macropod, intermediate in size between the kangaroos and the wallabies.[Wikipedia]";
     private int code1 = 200;
@@ -51,6 +71,8 @@ public class GPBServlet extends HttpServlet {
     private int code2 = 201;
 
     private ExampleMessages messagesGPB = null;
+    
+    private ExampleMessages messagesGPBWithUnicode = null;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -64,28 +86,46 @@ public class GPBServlet extends HttpServlet {
         msg.setName(name1);
         msg.setValue(value1);
         msg.setCode(code1);
-
         messages.add(msg.build());
-
         msg.clear();
         msg.setName(name2);
         msg.setValue(value2);
         msg.setCode(code2);
-
         messages.add(msg.build());
-
         // build a composite message composed of the above messages
         ExampleMessages.Builder builderGPBMessages = ExampleMessages.newBuilder();
         builderGPBMessages.addAllMsg(messages);
         messagesGPB = builderGPBMessages.build();
+        
+        
+        // same messages, but now add 2 unicode characters to distinguish between encodings
+        ExampleMsg.Builder msgUnicode = ExampleMsg.newBuilder();
+        msgUnicode.setName(name1);
+        msgUnicode.setValue(windows1252Char1 + " " + value1);
+        msgUnicode.setCode(code1);
+        messagesWithUnicode.add(msgUnicode.build());
+        msgUnicode.clear();
+        msgUnicode.setName(name2);
+        msgUnicode.setValue(windows1252Char2 + " " + value2);
+        msgUnicode.setCode(code2);
+        messagesWithUnicode.add(msgUnicode.build());
+        // build a composite message composed of the above messages
+        ExampleMessages.Builder builderGPBMessagesUnicode = ExampleMessages.newBuilder();
+        builderGPBMessagesUnicode.addAllMsg(messagesWithUnicode);
+        messagesGPBWithUnicode = builderGPBMessages.build();
     }
 
     private synchronized void initSharedDomains() {
         if (sharedDomains.isEmpty()) {
             String appEngineEnv = System.getProperty("com.google.appengine.runtime.environment");
             if (appEngineEnv != null && appEngineEnv.equalsIgnoreCase("Development")) {
+            
                 sharedDomains.add("http://127.0.0.1:8080");
                 sharedDomains.add("http://192.168.15.1:8080");
+            
+            } else {
+                // add your CORS Domains
+                //sharedDomains.add("http://yourdomaintoshareresourceswith");
             }
         }
     }
@@ -97,6 +137,9 @@ public class GPBServlet extends HttpServlet {
         log.log(Level.FINE, "{0}", req.getRequestURI());
 
         String useComposite = req.getParameter("useComposite");
+        
+        boolean useUnicode = (req.getParameter("u") != null) && 
+            (req.getParameter("u").equalsIgnoreCase("true"));
 
         BufferedOutputStream out = null;
 
@@ -114,12 +157,19 @@ public class GPBServlet extends HttpServlet {
         boolean utf8text = ((contentType != null) && (encoding != null)
             && contentType.equalsIgnoreCase("text/plain") && encoding.equalsIgnoreCase("UTF-8"));
 
+        boolean windows1252text = ((contentType != null) && (encoding != null)
+            && contentType.equalsIgnoreCase("text/plain") && encoding.equalsIgnoreCase("Windows-1252"));
+
         boolean octetstream = ((contentType != null) && (encoding != null)
             && contentType.equalsIgnoreCase("octet-stream") && encoding.equalsIgnoreCase("UTF-8"));
 
         try {
 
-            if (utf7text) {
+            if (windows1252text) {
+                resp.setContentType("text/plain");
+                resp.setCharacterEncoding("Windows-1252");
+                log.info("setting stream content-type to text/plain and character encoding to Windows-1252");
+            } else if (utf7text) {
                 resp.setContentType("text/plain");
                 resp.setCharacterEncoding("UTF-7");
                 log.info("setting stream content-type to text/plain and character encoding to UTF-7");
@@ -146,26 +196,43 @@ public class GPBServlet extends HttpServlet {
             addCORSHeaders(resp, req.getHeader("Origin"));
 
             if ((useComposite == null) || useComposite.equalsIgnoreCase("false")) {
+                
+                List<ExampleMessageProto.ExampleMsg> sendMessages;
+                if (useUnicode) {
+                    sendMessages = messagesWithUnicode;
+                    log.log(Level.INFO, "sending messages w/ unicode characters");
+                } else {
+                    sendMessages = messages;
+                }
 
                 out = new BufferedOutputStream(resp.getOutputStream(), 1024);
-                for (int i = 0; i < messages.size(); i++) {
-                    messages.get(i).writeDelimitedTo(out);
+                for (int i = 0; i < sendMessages.size(); i++) {
+                    sendMessages.get(i).writeDelimitedTo(out);
                 }
 
                 resp.setStatus(200);
 
-                log.log(Level.INFO, "sent {0} messages w/ built-in delimiters", messages.size());
+                log.log(Level.INFO, "sent {0} messages w/ built-in delimiters", sendMessages.size());
 
             } else {
 
+                ExampleMessages sendMessages;
+                if (useUnicode) {
+                    sendMessages = messagesGPBWithUnicode;
+                    log.log(Level.INFO, "sending messages w/ unicode characters");
+                } else {
+                    sendMessages = messagesGPB;
+                }
+                
                 out = new BufferedOutputStream(resp.getOutputStream(), 1024);
 
                 log.info("***gpb composite via codedoutput w/ a single delimiter");
-                messagesGPB.writeDelimitedTo(out);
+                sendMessages.writeDelimitedTo(out);
 
                 resp.setStatus(200);
 
-                log.log(Level.INFO, "sent {0} messages as a composite message w/ built-in delimiter", messages.size());
+                log.log(Level.INFO, "sent {0} messages as a composite message w/ built-in delimiter", 
+                    sendMessages.getMsgCount());
             }
 
         } catch (NumberFormatException e) {

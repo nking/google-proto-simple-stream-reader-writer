@@ -1,48 +1,97 @@
 The demo shows streaming a Google Protocol Buffer message from a java web application
-hosted by Google's Appengine.
+hosted by Google's Appengine, readable by unit tests you can run in your browers.
 
-The two urls /gbp and /gbplus accept parameters to specifiy the encoding returned and
+The goal was to find the right combination of encoding, content type and meta headers
+for each of the browsers in order to pass the protocol buffers successfully.
+Note that the unit tests within this application (/testGPB.html) are ones in which
+the client and server are the same domain, but CORS is implemented in any case
+and is needed for IE10.
+
+Summary of encoding, content type and additional configuration that work for 
+passing protocol buffers:
+
+    browsers              char encoding   content type   AJAX Object
+-----------------------   -------------   ------------   -----------
+Chrome, webkit, mozilla   UTF-8           octet-stream   XMLHttpRequest
+
+IE11                      UTF-8           octet-stream   XMLHttpRequest
+  
+IE10                      UTF-8           octet-stream   XDomainRequest
+                          UTF-8           text
+                          windows-1252    text
+** note that IE10 needs <meta http-equiv="X-UA-Compatible" content="IE=9" />
+
+IE9                                                      XDomainRequest or ActiveXObjectRequest
+                          UTF-8           octet-stream    
+                          windows-1252    text
+
+IE6, 7, 8                 UTF-8           octet-stream   ActiveXObjectRequest
+                          windows-1252    text
+** note that vbscript was necessary to read the data as binary from the response body.
+** also note that ActiveXObjectRequest is configured to attempt modes
+  "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
+  "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
+
+
+
+This demo application offers 2 urls to serve the example messages from.
+Those urls are /gpb and /gpbplus.  The first serves messages that are 
+protocol buffers with or without the built-in delimeters as requested.
+The 2nd url, /gpbplus is for custom delimeters, that are for example 
+built by the main application.
+
+CORS: 
+The servlet that responds to /gpb requests is 
+server/src/main/java/com/climbwithyourfeet/services/serveGPB/GPBServlet.java
+
+   There, you can add to method initSharedDomains() your domain.  That's needed
+   for IE10 to succeed if you're not using these with the localhost trust domain.
+
+
+The two urls /gbp and /gbplus accept parameters to specify the encoding returned and
 to specify whether to use delimiters between messages or not.
 The parameters are:
-   -- useComposite
-      values are true or false
-      default is true
-   -- ct
-      values are text/plain or octet-stream 
-      default is application/octet-stream
-   -- et
-      values are UTF-7 or UTF-8 or ISO-8859-1
-      default is UTF-8
+   -- useComposite=true|false  default is false
+   -- ct and et for content type and encoding type, respectively.
 
-The encoding choices are important and browser dependent if you're client is javascript.
-The encoding choices can also be dependent upon whether the client is hosted at the
-same domain or whether the client is sharing resources with the server using CORS.
-See the wiki page for the project for advice.
-    https://code.google.com/p/google-proto-simple-stream-reader-writer/wiki/usage
-AND see the results for the javascript unit tests in file ajax_tests.pdf to see which
-encoding "passed".
+      combinations accepted:
+
+          et=UTF-8        & ct=octet-stream
+          et=ISO-8859-1   & ct=text/plain
+          et=UTF-7        & ct=text/plain
+          et=Windows-1252 & ct=text/plain
 
 
-
-The clients are demonstrated in the tests and they are for languages java and javascript.
+      default if not specified is et=UTF-8 and ct=application/octet-stream
 
 -----------------------
 
 (1) To build:
    -- edit the elements <appengine.api.version> in the pom.xml files to equal your appengine SDK version
       files are pom.xml, dataModel/pom.xml, and server/pom.xml
+      The current configuration is SDK 1.9.3.
 
    -- install the appengine jars.  some are not available online, so an install script for posix systems
-      is included as a workaround.  
+      is included as a workaround.
       to use it:
           set the environment variable GOOGLE_APPS_ENGINE_HOME
           run this from the command line:
-              ./init_forsdk1811.sh
+              ./init_forsdk193.sh
 
+   -- if you're deploying to a domain other than your own localhost:
+      -- edit server/src/main/webapp/WEB-INF/appengine-web.xml
+            put your appengine appliction ID in element <application>DemoGPB</application>
+      -- edit server/src/main/webapp/testGPB.html
+            put your domain name and port in gpburl
+              var gpburl = "http://localhost:8080/gpb"; 
+      -- add your domain to method initSharedDomains() in
+         server/src/main/java/com/climbwithyourfeet/services/serveGPB/GPBServlet.java
+         
    -- run from the command line:
        mvn clean package
 
-(2) Deploy the built webapp to your local development appengine 
+
+(2) Deploy the built webapp to your local development appengine or google appengine slot
     (can download appengine at http://code.google.com/appengine/downloads.html)
     The built webapp, that is the war directory, can be found relative to
         the base project at demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
@@ -50,21 +99,17 @@ The clients are demonstrated in the tests and they are for languages java and ja
     cd $GOOGLE_APPS_ENGINE_HOME
     ./bin/dev_appserver.sh project_war_dir
     
-(3) After deployment, dial http://127.0.0.1:8080//testGPB.html in your browser to run the unit test.  
-    Note that if you use a different url, you'll have to edit the javascript variable gpburl.
+(3) After deployment, dial http://localhost:8080/testGPB.html OR
+    http://<your-appid>.appspot.com/testGPB.html in your browser to run the unit test.  
 
     Note also that not all tests will pass for a given browser.  The tests were written to
     run in different browser and domain combinations to find the right encodings.
 
-The javascript unit test is testGPB.html and includes best usages for different clients and the native delimiters.
-
-The java unit tests show client usage and can be seen at
-   demo/server/src/test/java/com/climbwithyourfeet/services/serveGPB
-
-and there's another servlet hosting alternative delimiters.
+    Note, that the servlet responding to /gpb is by default delivering example messages 
+    that are using the protocol buffer built-in delimeters.
 
 The java unit tests can be run from the project base directory with the command 'mvn test' while the
-application is deployed to localhost:8080
+application is deployed to localhost:8080.
 
 ------
 

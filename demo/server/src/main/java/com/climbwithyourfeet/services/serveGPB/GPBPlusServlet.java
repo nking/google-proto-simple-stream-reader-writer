@@ -4,7 +4,6 @@ import com.climbwithyourfeet.proto.ExampleMessageProto;
 import com.climbwithyourfeet.proto.ExampleMessageProto.ExampleMessages;
 import com.climbwithyourfeet.proto.ExampleMessageProto.ExampleMsg;
 import com.google.code.proto.streamio.*;
-import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessage;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -19,13 +18,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Serves Google Protocol Buffer messages with delimiters outside of the messages.
+ * Serves Google Protocol Buffer messages with custom delimiters from this application
+ * that separate the messages.
  * Useful if need to search a stream to find a signature byte marker in order to
  * see where the next message starts.
  * (You might need to alter the byte marker to
  * make it unique for your content.  Currently, the signature for the start of the byte
  * marker is the control character null (0) and the remaining 4 bytes hold the message
- * size which is fine for text.)
+ * size which is fine for text.)  Note that the protocol buffers have built-in delimeters
+ * option too.  That's possible to configure another servlet to use those.
  *
  * Servlet accepts the following optional parameters:
  * <code>
@@ -35,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
  *   ec = UTF-7
  *   ec = UTF-8
  *   ec = ISO-8859-1
+ *   ec = Windows-1252
  *</code>
  *
  * @author nichole
@@ -49,6 +51,7 @@ public class GPBPlusServlet extends HttpServlet {
 
     private List<String> sharedDomains = new ArrayList<String>();
 
+    // ISO-8859-1 differs from Windows-1252 in code points 128-159 (0x80-0x9F)
     private String name1 = "Wallaroo";
     private String value1 = "A Wallaroo is any of three closely related species of moderately large macropod, intermediate in size between the kangaroos and the wallabies.[Wikipedia]";
     private int code1 = 200;
@@ -93,6 +96,9 @@ public class GPBPlusServlet extends HttpServlet {
                 sharedDomains.add("http://127.0.0.1:8080");
                 sharedDomains.add("http://127.0.0.1:8081");
                 sharedDomains.add("http://192.168.15.1");
+            } else {
+                // add your CORS Domains
+                //sharedDomains.add("http://yourdomaintoshareresourceswith");
             }
         }
     }
@@ -119,12 +125,19 @@ public class GPBPlusServlet extends HttpServlet {
         boolean utf8text = ((contentType != null) && (encoding != null)
             && contentType.equalsIgnoreCase("text/plain") && encoding.equalsIgnoreCase("UTF-8"));
 
+        boolean windows1252text = ((contentType != null) && (encoding != null)
+            && contentType.equalsIgnoreCase("text/plain") && encoding.equalsIgnoreCase("Windows-1252"));
+
         boolean octetstream = ((contentType != null) && (encoding != null)
             && contentType.equalsIgnoreCase("octet-stream") && encoding.equalsIgnoreCase("UTF-8"));
 
         try {
 
-            if (utf7text) {
+            if (windows1252text) {
+                resp.setContentType("text/plain");
+                resp.setCharacterEncoding("Windows-1252");
+                log.info("setting stream content-type to text/plain and character encoding to Windows-1252");
+            } else if (utf7text) {
                 resp.setContentType("text/plain");
                 resp.setCharacterEncoding("UTF-7");
                 log.info("setting stream content-type to text/plain and character encoding to UTF-7");

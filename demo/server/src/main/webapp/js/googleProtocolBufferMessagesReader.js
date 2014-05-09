@@ -128,7 +128,7 @@ function readMessagesFromBinaryString(binaryString, createPROTOMessage, perMessa
     _readMessagesFromBinaryStringIteratively(0, binaryString, createPROTOMessage, perMessageCallback, completedCallback, errorCallback, dictionary);
 }
 
-function readMessagesFromBinaryString_no_delimiters(binaryString, createCityGridPROTOMessage, messageCallback, errorHandle, dictionary) {
+function readMessagesFromBinaryString_no_delimiters(binaryString, createCityGridPROTOMessage, messageCallback, errorCallback, dictionary) {
     var decodedmsg = createCityGridPROTOMessage();
     try {
         _readMessageFromBinaryString(binaryString, 0, binaryString.length, decodedmsg);
