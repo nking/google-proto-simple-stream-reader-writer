@@ -22,7 +22,8 @@ IE9                                                      XDomainRequest or Activ
 
 IE6, 7, 8                 UTF-8           octet-stream   ActiveXObjectRequest
                           windows-1252    text
-** note that vbscript was necessary to read the data as binary from the response body.
+** note that vbscript was necessary to read the data as binary from the response body
+of ActiveXObjectRequest
 ** also note that ActiveXObjectRequest is configured to attempt modes
   "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
   "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
