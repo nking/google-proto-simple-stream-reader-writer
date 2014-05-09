@@ -1,45 +1,32 @@
 /*
 * Methods to help w/ browser specific ajax calls and parsing of responses.
 *
-* A few things found:
-*
-*    -- For IE6-IE7 this combination works:
-*       server settings:
-*            content-type=octet/stream
-*            character encoding=UTF-8
-*       Google protocol buffers written to stream using the message's .writeDelimitedTo(out)
-*       and client AJAX being ActiveXObject with attempts for "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
-*           "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
-*            Note, that vbscript was necessary to read the data as binary from the response body.
-*            see testGPB.html
-*
-*    -- For IE8 this combination works:
-*       server settings:
-*            content-type=text/plain
-*            character encoding=windows-1252
-*       Google protocol buffers written to stream using the message's .writeDelimitedTo(out)
-*       and client code should use AJAX  XDomainRequest
-*
-*    -- For IE9, this combination works:
-*       server settings:
-*            content-type=octet/stream
-*            character encoding=UTF-7
-*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
-*       and client AJAX being XDomainRequest
-*
-*    -- For webkit (Chrome, Safari), nearly all combinations work, but this complements the above:
-*       server settings:
-*            content-type=octet/stream
-*            character encoding=UTF-8
-*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
-*       and client being XMLHttpRequest
-*
-*   -- For mozilla, this combination works:
-*       server settings:
-*            content-type=octet/stream
-*            character encoding=UTF-8
-*       google protocol buffers written to stream using the message's .writeDelimitedTo(out)
-*       and client being XMLHttpRequest (but don't use arrayBuffer setting)
+*<pre>
+*Summary of encoding, content type and additional configuration that work for
+passing protocol buffers:
+
+    browsers              char encoding   content type   AJAX Object
+-----------------------   -------------   ------------   -----------
+Chrome, webkit, mozilla   UTF-8           octet-stream   XMLHttpRequest
+
+IE11                      UTF-8           octet-stream   XMLHttpRequest
+
+IE10                      UTF-8           octet-stream   XDomainRequest
+                          UTF-8           text
+                          windows-1252    text
+** note that IE10 needs <meta http-equiv="X-UA-Compatible" content="IE=9" />
+
+IE9                                                      XDomainRequest or ActiveXObjectRequest
+                          UTF-8           octet-stream
+                          windows-1252    text
+
+IE6, 7, 8                 UTF-8           octet-stream   ActiveXObjectRequest
+                          windows-1252    text
+** note that vbscript was necessary to read the data as binary from the response body.
+** also note that ActiveXObjectRequest is configured to attempt modes
+  "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
+  "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
+*</pre>
 *
 * The generated messages are Google Protocol Buffer messages, whose templates
 * were compiled from the Google Protocol Buffer library
@@ -75,6 +62,12 @@
             </script>
 
         <![endif]-->
+
+  and IE10 needs in your html header:
+
+      <!--[if IE 10]>
+            <meta http-equiv="X-UA-Compatible" content="IE=9" />
+      <![endif]-->
 */
 
 /**
