@@ -20,13 +20,19 @@ IE9                                                      XDomainRequest or Activ
                           UTF-8           octet-stream
                           windows-1252    text
 
-IE6, 7, 8                 UTF-8           octet-stream   ActiveXObjectRequest
+IE8(CORS)                 windows-1252    text           XDomainRequest
+
+IE6, IE7, E8(local)       UTF-8           octet-stream   ActiveXObjectRequest
                           windows-1252    text
 ** note that vbscript was necessary to read the data as binary from the response body
-of ActiveXObjectRequest
+of ActiveXObjectRequest.
 ** also note that ActiveXObjectRequest is configured to attempt modes
   "Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0",
   "Msxml2.XMLHTTP.3.0", "Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
+** If using CORS to share data between client and server of different domains,
+   IE browsers > IE7 and < IE10 will need to use XDomainRequest instead of ActiveXObjectRequest.
+   the content then has to be text, so use encoding windows-1252.  
+   did not test on IE6 and IE7 XDomainRequest w/ CORS...
 *</pre>
 *
 * The generated messages are Google Protocol Buffer messages, whose templates
