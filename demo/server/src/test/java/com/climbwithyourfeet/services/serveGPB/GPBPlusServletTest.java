@@ -1,17 +1,13 @@
 package com.climbwithyourfeet.services.serveGPB;
 
-import com.climbwithyourfeet.proto.ExampleMessageProto;
 import com.climbwithyourfeet.proto.ExampleMessageProto.ExampleMsg;
-import java.util.List;
-import java.io.IOException;
-import org.junit.After;
-import static org.junit.Assert.*;
-import com.google.protobuf.GeneratedMessage.Builder;
-import com.google.code.proto.streamio.*;
+import com.climbwithyourfeet.proto.ExampleMessageProto.ExampleMsg.Builder;
+import com.google.code.proto.streamio.PBStreamReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,13 +17,13 @@ import javax.servlet.ServletConfig;
  *
  * @author nichole
  */
-public class GPBServletTest extends LocalServiceTestCase {
+public class GPBPlusServletTest extends LocalServiceTestCase {
 
     protected Logger log = Logger.getLogger(this.getClass().getName());
     
     private boolean isOnline = false;
 
-    public GPBServletTest() {
+    public GPBPlusServletTest() {
         super();
     }
 
@@ -36,24 +32,24 @@ public class GPBServletTest extends LocalServiceTestCase {
         super.setUp();
     }
 
-    @After
     public void tearDown() throws Exception {
         super.tearDown();
     }
     
-    public void testGetDefaultMessages() throws Exception {
-        String path = "/gpb";
+    public void testGetCustomDelimiterMessages() throws Exception {
+        
+        String path = "/gpbplus";
         
         assertMessages(path);
     }
     
-    public void testGetDefaultMessagesWith1252Encoding() throws Exception {
+    public void estMessagesWith1252Encoding() throws Exception {
         
         String ct = URLEncoder.encode("text/plain");
         
         String et = URLEncoder.encode("Windows-1252");
         
-        String path = "/gpb?et=" + et + "&" + ct;
+        String path = "/gpbplus?et=" + et + "&" + ct;
         
         assertMessages(path);
     }
@@ -62,7 +58,7 @@ public class GPBServletTest extends LocalServiceTestCase {
             
         String urlStr = "http://127.0.0.1:8080" + pathAndQuery;
 
-        GPBServlet servlet = new GPBServlet();
+        GPBPlusServlet servlet = new GPBPlusServlet();
         ServletConfig servletConfig = getServletConfig("GPBServlet");
         servlet.init(servletConfig);
         
@@ -92,25 +88,14 @@ public class GPBServletTest extends LocalServiceTestCase {
 
         try {
             in = new ByteArrayInputStream(contentBytes);
-                    
-            // reading the messages that were generated with Google's
-            // built-in delimiters
 
-            List<ExampleMessageProto.ExampleMsg> messages = new ArrayList<ExampleMsg>();
+            // reading messages that were generated with custom delimiters
 
-            ExampleMsg msg = ExampleMsg.parseDelimitedFrom(in);
+            PBStreamReader streamReader = new PBStreamReader();
 
-            ExampleMsg msg2 = ExampleMsg.parseDelimitedFrom(in);
-
-            log.log(Level.FINE, "read serialized message: {0}", new Object[]{msg.toString()});
-
-            log.log(Level.FINE, "read serialized message: {0}", new Object[]{msg2.toString()});
-
-            assertNotNull(msg);
-
-            assertNotNull(msg2);
-
-            assertTrue(!msg.toString().equals(msg2.toString()));
+            List<ExampleMsg> messages = streamReader.read(in, builder);
+            assertNotNull(messages);
+            assertTrue(messages.size() == 2);
 
         } catch (Throwable t) {
             fail(t.getMessage());

@@ -62,8 +62,9 @@
             </activation>
             <build>
                 <plugins>
-                    <!--  mvn clean verify -Pcoverage
-                    the plugin by itself is found as org.jacoco:jacoco-maven-plugin:prepare-agent -Pcoverage -->
+                    <!-- 
+                    mvn verify -Pcoverage
+                    though the plugin by itself is found as org.jacoco:jacoco-maven-plugin:prepare-agent -Pcoverage -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>

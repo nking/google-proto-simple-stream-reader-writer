@@ -160,6 +160,11 @@ public class GPBPlusServlet extends HttpServlet {
             }
 
             resp.addHeader("Cache-Control", "no-cache"); /* needed for Android */
+            
+            log.log(Level.FINE, "streaming messages with contentType={0} and encoding={1}", 
+                new Object[]{resp.getContentType(), resp.getCharacterEncoding()});
+            
+            // build messages using custom delimiters
 
             PBWireSignedByteMarkerHelper pbh = new PBWireSignedByteMarkerHelper();
 

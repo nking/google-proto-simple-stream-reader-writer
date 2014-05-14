@@ -197,6 +197,8 @@ public class GPBServlet extends HttpServlet {
 
             if ((useComposite == null) || useComposite.equalsIgnoreCase("false")) {
                 
+                // generating w/ Google's built-in delimiters
+                
                 List<ExampleMessageProto.ExampleMsg> sendMessages;
                 if (useUnicode) {
                     sendMessages = messagesWithUnicode;
@@ -215,6 +217,8 @@ public class GPBServlet extends HttpServlet {
                 log.log(Level.INFO, "sent {0} messages w/ built-in delimiters", sendMessages.size());
 
             } else {
+                
+                // generating composite messages, no delimiters
 
                 ExampleMessages sendMessages;
                 if (useUnicode) {
