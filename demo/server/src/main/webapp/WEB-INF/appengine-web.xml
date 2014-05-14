@@ -26,6 +26,7 @@
 
         <include path="/js/jquery-1.7.2.min.js" />
         <include path="/js/qunit.js" />
+        <include path="/js/blanket.js" />
         <include path="/stylesheets/qunit.css"/>
     </static-files>
 </appengine-web-app>
