@@ -17,6 +17,41 @@
         </developer>
     </developers>
 
+    <repositories>
+        <repository>
+            <id>local</id>
+            <name>local</name>
+            <url>file://${user.home}/.m2/repository</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+            </releases>
+        </repository>
+    <!--
+
+        <repository>
+            <id>wso2-maven2-repository</id>
+            <url>http://dist.wso2.org/maven2</url>
+        </repository>
+        <repository>
+            <id>dist-wso2</id>
+            <name>WSO2 Repo</name>
+            <url>http://dist.wso2.net/maven2</url>
+        </repository>
+        <repository>
+            <id>google-maven-repository</id>
+            <name>google-maven-repository</name>
+            <url>http://google-maven-repository.googlecode.com/svn/repository/</url>
+        </repository>
+    -->
+        <repository>
+            <id>sonatype-nexus</id>
+            <name>Sonatype Maven Repository</name>
+            <url>http://oss.sonatype.org/</url>
+        </repository>
+    </repositories>
+    
     <profiles>
         <profile>
             <id>compile_protocol_buffers</id>
@@ -56,46 +91,78 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>coverage</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-compiler-plugin</artifactId>
+                            <version>3.1</version>
+                            <configuration>
+                                <source>${java.source.version}</source>
+                                <target>${java.target.version}</target>
+                                <encoding>UTF-8</encoding>
+                                <verbose>true</verbose>
+                                <fork>true</fork>
+                                <debug>true</debug>
+                                <executable>${JAVA_HOME}/bin/javac</executable>
+                                <compilerVersion>${java.target.version}</compilerVersion>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <plugins>
+                    <!--  org.jacoco:jacoco-maven-plugin:prepare-agent -Pcoverage -->
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.6.3.201306030806</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                                <configuration>
+                                    <propertyName>coverageAgent</propertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.15</version>
+                        <configuration>
+                            <argLine>-Xmx256m ${coverageAgent}</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
-
-    <repositories>
-        <repository>
-            <id>local</id>
-            <name>local</name>
-            <url>file://${user.home}/.m2/repository</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-            </releases>
-        </repository>
-    <!--
-
-        <repository>
-            <id>wso2-maven2-repository</id>
-            <url>http://dist.wso2.org/maven2</url>
-        </repository>
-        <repository>
-            <id>dist-wso2</id>
-            <name>WSO2 Repo</name>
-            <url>http://dist.wso2.net/maven2</url>
-        </repository>
-        <repository>
-            <id>google-maven-repository</id>
-            <name>google-maven-repository</name>
-            <url>http://google-maven-repository.googlecode.com/svn/repository/</url>
-        </repository>
-    -->
-        <repository>
-            <id>sonatype-nexus</id>
-            <name>Sonatype Maven Repository</name>
-            <url>http://oss.sonatype.org/</url>
-        </repository>
-    </repositories>
 
     <build>
         <finalName>${project.groupId}-${project.artifactId}-${project.version}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.15</version>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>isTesting</name>
+                            <value>true</value>
+                        </property>
+                    </systemProperties>
+                    <argLine>-XX:-UseSplitVerifier</argLine>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -104,8 +171,12 @@
                     <source>${java.source.version}</source>
                     <target>${java.target.version}</target>
                     <encoding>UTF-8</encoding>
+                    <verbose>true</verbose>
+                    <fork>true</fork>
+                    <executable>${JAVA_HOME}/bin/javac</executable>
+                    <compilerVersion>${java.target.version}</compilerVersion>
                 </configuration>
-            </plugin>
+            </plugin>            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -114,23 +185,10 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>2.2</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.15</version>
-                <configuration>
-                    <argLine>-XX:-UseSplitVerifier</argLine>
-                    <includes>
-                        <include>**/*Test.java</include>
-                    </includes>
-                </configuration>
             </plugin>
         </plugins>
         <resources>
@@ -140,6 +198,7 @@
             </resource>
         </resources>
     </build>
+    
     <dependencies>
         <dependency>
             <groupId>com.google.protobuf</groupId>

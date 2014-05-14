@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+
+<project xmlns:jacoco="antlib:org.jacoco.ant" name="run_jacoco_reports" default="report">
+
+  <description>
+    Runs jacoco
+  </description>
+
+  <!-- requires all *.exec files to already be in directory
+           target/quality/jacoco
+       class files into
+           target/quality/classes
+       source files into
+           target/quality/sources
+  -->
+  <property name="jacoco.exec.dir" location="target/quality/jacoco"/>
+
+  <property environment="env"/>
+
+  <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+    <classpath path="${env.JACOCO_HOME}/lib/jacocoant.jar"/>
+  </taskdef>
+
+  <target name="merge-exec-files" >
+
+    <jacoco:merge destfile="${jacoco.exec.dir}/merged.exec">
+      <fileset dir="${jacoco.exec.dir}" includes="*.exec"/>
+    </jacoco:merge>
+
+  </target>
+
+  <target name="report" depends="merge-exec-files" >
+
+    <jacoco:report>
+                        
+      <executiondata>
+        <file file="target/quality/jacoco/merged.exec"/>
+      </executiondata>
+                        
+      <structure name="Jacoco Report">
+        <classfiles>
+          <fileset dir="target/quality/classes"/>
+        </classfiles>
+        <sourcefiles encoding="UTF-8">
+          <fileset dir="target/quality/sources"/>
+        </sourcefiles>
+      </structure>
+                        
+      <html destdir="docs/quality/jacoco"/>
+
+    </jacoco:report>
+
+  </target>
+
+</project>
