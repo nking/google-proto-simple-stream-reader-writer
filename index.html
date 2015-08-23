@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Google-proto-simple-stream-reader-writer by nking</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Google-proto-simple-stream-reader-writer</h1>
+        <p class="header">a helper for use of Google protocol buffers on the web (javascript and java)</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/nking/google-proto-simple-stream-reader-writer/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/nking/google-proto-simple-stream-reader-writer/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/nking/google-proto-simple-stream-reader-writer">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/nking">nking</a></p>
+
+
+      </header>
+      <section>
+        <h3>
+<a id="is-a-java-and-javascript-library-to-read-and-write-google-protocol-buffers-in-the-browser-on-the-server-side-and-in-non-web-clients--the-project-also-contains-a-small-demo-google-app-engine-application-that-streams-protocol-buffer-messages-to-clients-including-a-web-client" class="anchor" href="#is-a-java-and-javascript-library-to-read-and-write-google-protocol-buffers-in-the-browser-on-the-server-side-and-in-non-web-clients--the-project-also-contains-a-small-demo-google-app-engine-application-that-streams-protocol-buffer-messages-to-clients-including-a-web-client" aria-hidden="true"><span class="octicon octicon-link"></span></a>is a Java and Javascript library to read and write <em>Google protocol buffers</em> in the browser, on the server side, and in non-web clients.  The project also contains a small demo Google app-engine application that streams protocol buffer messages to clients, including a web client.</h3>
+
+<p>(Note, the project may need to be updated occasionally for the latest appengine apis.)</p>
+
+<pre><code>To build:
+     mvn clean package
+The binary will be in target/gpb-stream-reader-writer-{version}.jar
+
+Or include the dependency in your maven2 pom.xml:
+&lt;dependency&gt;
+  &lt;groupId&gt;com.google.code.google-proto-simple-reader-writer&lt;/groupId&gt;
+  &lt;artifactId&gt;gpb-stream-reader-writer&lt;/artifactId&gt;
+  &lt;version&gt;1.5.3&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>(include links for the wiki and demo source and jar location here)</p>
+
+<p>Summary of encoding, content type and additional configuration needed for data transfer, learned while testing for different browsers:</p>
+
+<table>
+<thead>
+<tr>
+<th>browsers</th>
+<th>char encoding</th>
+<th>content type</th>
+<th>AJAX Object</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chrome, webkit, mozilla</td>
+<td>UTF-8</td>
+<td>octet-stream</td>
+<td>XMLHttpRequest</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IE11</td>
+<td>UTF-8</td>
+<td>octet-stream</td>
+<td>XMLHttpRequest</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IE10</td>
+<td>UTF-8</td>
+<td>octet-stream</td>
+<td>XDomainRequest</td>
+</tr>
+<tr>
+<td></td>
+<td>UTF-8</td>
+<td>text</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>windows-1252</td>
+<td>text</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IE9</td>
+<td></td>
+<td></td>
+<td>XDomainRequest or ActiveXObjectRequest</td>
+</tr>
+<tr>
+<td></td>
+<td>UTF-8</td>
+<td>octet-stream</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>windows-1252</td>
+<td>text</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IE8(CORS)</td>
+<td>windows-1252</td>
+<td>text</td>
+<td>XDomainRequest</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IE6, IE7, E8(local)</td>
+<td>UTF-8</td>
+<td>octet-stream</td>
+<td>ActiveXObjectRequest</td>
+</tr>
+<tr>
+<td></td>
+<td>windows-1252</td>
+<td>text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<pre><code>note that IE10 needs &lt;meta http-equiv="X-UA-Compatible" content="IE=9" /&gt;
+
+note that vbscript was necessary to read the data as binary from the 
+response body of ActiveXObjectRequest.
+
+note that ActiveXObjectRequest is configured to attempt modes 
+"Msxml2.XMLHTTP.6.0","Msxml2.XMLHTTP.4.0", "Msxml2.XMLHTTP.3.0", 
+"Msxml2.XMLHTTP", "Microsoft.XMLHTTP"
+
+If using CORS to share data between client and server of different 
+domains, IE browsers &gt; IE7 and &lt; IE10 will need to use XDomainRequest 
+instead of ActiveXObjectRequest.  The content then has to be text, 
+so use encoding windows-1252.
+</code></pre>
+
+<p>did not test on IE6 and IE7 XDomainRequest w/ CORS...</p>
+
+<p>Note that the cross origin resource sharing (CORS) domain configurations above work for http and https, excepting XDomainRequest which does not allow https from an http origin at this time (though they will hopefully fix the security warning that more secure content may be present instead of removing ability to use https from their XDomainRequest object...).</p>
+
+<p>The tests are in testGPB.html.</p>
+
+<p>Note too that for javascipt clients, you'll want to scrub your text for characters that might break
+your javascript deserialization of the messages.  See the Util.java. Essentially, quotes and line breaks...</p>
+
+<blockquote>
+<pre><code>   str = str.replaceAll("'", "&amp;#39;");
+   str = str.replaceAll("\"", "&amp;#34;");
+   str = str.replaceAll("\n", "");
+   str = str.replaceAll("\r", ""); // this shouldn't be necessary
+</code></pre>
+</blockquote>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
