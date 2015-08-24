@@ -1,12 +1,10 @@
 package com.google.code.proto.streamio;
 
 import com.google.code.proto.model.ExampleMessageProto.ExampleMsg;
-import com.google.protobuf.CodedOutputStream;
-import java.util.ArrayList;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.List;
-import org.junit.After;
-import org.junit.Before;
+import java.util.logging.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import junit.framework.TestCase;
@@ -17,40 +15,40 @@ import junit.framework.TestCase;
  */
 public class PBWireByteMarkerHelperTest extends TestCase {
 
+    private Logger log = Logger.getLogger(this.getClass().getName());
+    
     public PBWireByteMarkerHelperTest() {
         super();
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
     }
 
     /**
      * Test of calculateEventByteMarker method, of class PBWireHelper.
      */
-    @Test
-    public void testIntegerToSignedByteBigEndian() {
+    public void testIntegerToSignedByteBigEndian() throws Exception {
 
         PBWireSignedByteMarkerHelper pbh = new PBWireSignedByteMarkerHelper();
 
-        int sz = 100000;
-        byte[] marker = pbh.integerToBytesBigEndian(sz);
+        SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
 
-        assertNotNull(marker);
+        long seed = System.currentTimeMillis();
 
-        int sz2 = pbh.bytesToInteger(marker);
-
-        assertTrue(sz == sz2);
+        sr.setSeed(seed);
+        log.info("SEED=" + seed);
+        
+        for (int i = 0; i < 100; ++i) {
+            
+            int v = sr.nextInt(1000000);
+            
+            byte[] bytes = pbh.integerToBytesBigEndian(v);
+            
+            BigInteger b = new BigInteger(bytes);
+            
+            long r = b.longValueExact();
+            
+            assertTrue(r == v);
+        }
     }
 
-
-    @Test
     public void testUnsignedBytesToInteger() {
         // initialized but empty byte marker returns zero
         PBWireUnsignedByteMarkerHelper pbh = new PBWireUnsignedByteMarkerHelper();
@@ -94,7 +92,6 @@ public class PBWireByteMarkerHelperTest extends TestCase {
     /**
      * Test of calculateEventByteMarker method, of class PBWireHelper.
      */
-    @Test
     public void testIntegerToUnsignedByteBigEndian() throws Exception {
 
         PBWireUnsignedByteMarkerHelper pbh = new PBWireUnsignedByteMarkerHelper();
@@ -109,8 +106,6 @@ public class PBWireByteMarkerHelperTest extends TestCase {
         assertTrue(sz == sz2);
     }
 
-
-    @Test
     public void testSignedBytesToInteger() {
         // initialized but empty byte marker returns zero
         PBWireSignedByteMarkerHelper pbh = new PBWireSignedByteMarkerHelper();
@@ -122,7 +117,6 @@ public class PBWireByteMarkerHelperTest extends TestCase {
         assertTrue(sz == 0);
     }
 
-    @Test
     public void testCreateMessageUnsignedByteMarker() {
 
         String name1 = "message name";
@@ -151,21 +145,28 @@ public class PBWireByteMarkerHelperTest extends TestCase {
         assertTrue(sz == sz2);
     }
 
-    @Test
     public void testTmp() {
 
-        PBWireUnsignedByteMarkerHelper pbh = new PBWireUnsignedByteMarkerHelper();
+        PBWireSignedByteMarkerHelper pbh = new PBWireSignedByteMarkerHelper();
 
-        int sz = 275;
+        int sz = 511;
         byte[] byteMarker = pbh.integerToBytesBigEndian(sz);
 
-
         int rsz = pbh.bytesToInteger(byteMarker);
+        
+        assertTrue(sz == rsz);
 
         PBWireSignedByteMarkerHelper pbh2 = new PBWireSignedByteMarkerHelper();
-        byte[] byteMarker2 = new byte[]{19,1,0,0};
+        byte[] byteMarker2 = new byte[]{0, 0, 1, -1};
         int sz2 = pbh2.bytesToInteger(byteMarker2);
 
-        int i = 1;
+        assertTrue(sz2 == sz);
+        
+        /*
+        v=127       bytes=[0, 0, 0, 127]
+        v=511       bytes=[0, 0, 1, -1]
+        v=512       bytes=[0, 0, 2, 0]
+        v=33554432  bytes=[2, 0, 0, 0]        
+        */
     }
 }

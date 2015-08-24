@@ -16,21 +16,21 @@ public class PBWireSignedByteMarkerHelper extends AbstractPBWireByteMarkerHelper
      * Convert the integer into a byte array composed of byte shifted parts of the integer.
      * 
      * 
-     * @param sz the integer to be represented by the returned byte array
+     * @param value the integer to be represented by the returned byte array
      * @return 
      */
     @Override
-    public byte[] integerToBytesBigEndian(int sz) {
+    public byte[] integerToBytesBigEndian(int value) {
 
         byte[] marker = new byte[byteMarkerSize];
         
         for (int i = 0; i < marker.length; i++) {
             int shift = i * 8;
-            int a = (sz >> shift) & 255;
-            byte b = ((a >= 0) && (a < 128)) ? (byte) a : (byte)(a - 256);
-            marker[i] = b;
+            int a = (value >> shift) & 0xff;
+            byte b = (byte)a;
+            marker[byteMarkerSize - i - 1] = b;
         }
-        
+      
         return marker;
     }
      
@@ -55,13 +55,13 @@ public class PBWireSignedByteMarkerHelper extends AbstractPBWireByteMarkerHelper
         int total = 0;
         
         for (int i = 0; i < marker.length; i++) {
+            int shift = (marker.length - i - 1) * 8;
             byte b = marker[i];
-            int d = ((b >= 0) && (b < 128)) ? (int)b : 256 + (int)b;
-            int shift = i * 8;
-            d = (d & 0xff) << shift;
+            int d = (b > -1) ? b : 256 + b;
+            d = d << shift;
             total += d;
         }
-        
+       
         return total;
     }
 }

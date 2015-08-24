@@ -18,28 +18,21 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
      * that can only process strings
      * (ascii being 0-127.  extended ascii is 128-255 but not all clients can read that).
      *
-     * @param sz the integer to be represented by the returned byte array
+     * @param value the integer to be represented by the returned byte array
      * @return
      */
     @Override
-    public byte[] integerToBytesBigEndian(int sz) {
+    public byte[] integerToBytesBigEndian(int value) {
 
         byte[] marker = new byte[byteMarkerSize];
 
-        /*
-         * int          byte
-         * -----        -----
-         * 0            0
-         * 127          127
-         */
         for (int i = 0; i < marker.length; i++) {
             int shift = i * 7;
-            int a = (sz >> shift) & 0x7f;
-
-            byte b = (byte) a;
-            marker[i] = b;
+            long a = (value >> shift) & 0x7f;
+            byte b = (byte)a;
+            marker[byteMarkerSize - i - 1] = b;
         }
-
+       
         return marker;
     }
 
@@ -63,18 +56,20 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
          */
         int total = 0;
         for (int i = 0; i < marker.length; i++) {
+            int shift = (marker.length - i - 1) * 7;
             byte b = marker[i];
             if (b > 127) {
                 throw new IllegalArgumentException("byte marker contains a value less than 0 which is not allowed");
             }
-            int d = (int) b;
-            int shift = i * 7;
-            d = (d & 0x7f) << shift;
+            int d = b;
+            d = d << shift;
             total += d;
         }
+        
         if (total > Math.pow(2, (8 * byteMarkerSize) - 1)) {
             throw new IllegalArgumentException("the value sz exceeds the max holdable in these byte markers");
         }
+        
         return total;
     }
 }
