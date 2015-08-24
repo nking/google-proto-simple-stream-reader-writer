@@ -117,6 +117,27 @@
                     </plugins>
                 </pluginManagement>
                 <plugins>
+                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>package-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <!-- generated file will have name finalName plus "-sources or
+                                    finalName plus "-test-sources" -->
+                                    <finalName>${project.groupId}-${project.artifactId}-${project.version}</finalName>
+                                    <attach>false</attach>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <!--  org.jacoco:jacoco-maven-plugin:prepare-agent -Pcoverage -->
                     <plugin>
                         <groupId>org.jacoco</groupId>
