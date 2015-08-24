@@ -219,7 +219,7 @@ header {
 	color: #FDFDFB;
   width:190px;
   float:left;
-  position:fixed;
+  position:relative;
 	border: 1px solid #000;
 	-webkit-border-top-right-radius: 4px;
 	-webkit-border-bottom-right-radius: 4px;
