@@ -17,7 +17,7 @@ public class PBWireSignedByteMarkerHelper extends AbstractPBWireByteMarkerHelper
      * 
      * 
      * @param value the integer to be represented by the returned byte array
-     * @return 
+     * @return value in signed integer big endian bytes format
      */
     @Override
     public byte[] integerToBytesBigEndian(int value) {
@@ -37,8 +37,8 @@ public class PBWireSignedByteMarkerHelper extends AbstractPBWireByteMarkerHelper
      /**
      * Convert the marker byte array to an integer where each item in marker array is part of byte shifted integer
      * 
-     * @param marker
-     * @return 
+     * @param marker a byte array in big endian bytes format
+     * @return the original value of the byte array as a signed integer
      */
     @Override
      public int bytesToInteger(byte[] marker) {

@@ -82,7 +82,7 @@ The parameters are:
       to use it:
           set the environment variable GOOGLE_APPS_ENGINE_HOME
           run this from the command line:
-              ./init_forsdk193.sh
+              ./init_forsdk_1_9_25.sh
 
    -- if you're deploying to a domain other than your own localhost:
       -- edit server/src/main/webapp/WEB-INF/appengine-web.xml
@@ -102,13 +102,15 @@ The parameters are:
     The built webapp, that is the war directory, can be found relative to
         the base project at demo/server/target/com.climbwithyourfeet.DemoGPB-server-0.1
 
-    cd $GOOGLE_APPS_ENGINE_HOME
-    ./bin/dev_appserver.sh project_war_dir
+    $GOOGLE_APPS_ENGINE_HOME/bin/dev_appserver.sh project_war_dir
+
+    for example:
+        $GOOGLE_APPS_ENGINE_HOME/bin/dev_appserver.sh server/target/com.climbwithyourfeet.DemoGPB-server-0.1
     
 (3) After deployment, dial http://localhost:8080/testGPB.html OR
     http://<your-appid>.appspot.com/testGPB.html in your browser to run the unit test.  
 
-    Note also that not all tests will pass for a given browser.  The tests were written to
+    Note also that **NOT ALL TESTS will pass for a given browser**.  The tests were written to
     run in different browser and domain combinations to find the right encodings.
 
     Note, that the servlet responding to /gpb is by default delivering example messages 

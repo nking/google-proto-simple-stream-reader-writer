@@ -170,10 +170,7 @@
                                     <fileset dir="." includes="**/jstl*jar"/>
                                     <fileset dir="." includes="**/standard*jar"/>
                                     <fileset dir="." includes="**/maven-plugin-api*jar"/>
-                                    <!-- -->
-                                    <!-- <fileset dir="." includes="**/appengine-api-1.0-sdk-${appengine.api.version}.jar"/> -->
-                                    <!-- <fileset dir="." includes="**/appengine-remote-api-*jar"/> -->
-                                    <!-- <fileset dir="." includes="**/appengine-tools-api-*jar"/> -->
+                                    
                                     <fileset dir="." includes="**/appengine-api-stubs*jar"/>
                                     <fileset dir="." includes="**/appengine-api-${appengine.api.version}.jar"/>
                                     <fileset dir="." includes="**/appengine-testing*jar"/>
@@ -280,7 +277,7 @@
     <properties>
         <java.source.version>1.7</java.source.version>
         <java.target.version>1.7</java.target.version>
-        <appengine.api.version>1.9.3</appengine.api.version>
+        <appengine.api.version>1.9.25</appengine.api.version>
         <project.version>${project.version}</project.version>
     </properties>
 </project>

@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.junit.Test;
 import com.google.protobuf.AbstractMessage.Builder;
-
-import com.google.protobuf.GeneratedMessage;
 import java.util.logging.Logger;
 import junit.framework.TestCase;
 

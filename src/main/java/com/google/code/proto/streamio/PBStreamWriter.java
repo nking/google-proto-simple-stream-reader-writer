@@ -9,11 +9,11 @@ import java.util.logging.Logger;
 
 /**
  * A writer for an output stream of Google protocol buffer generated messages.
- * <br />
- * <br />
- * <b>Usage:</b><br />
+ * <br>
+ * <br>
+ * <b>Usage:</b><br>
  * {@code List<YourProtocolBufferMessage> messages = getGPBMessages...}
- * <br />
+ * <br>
  * {@code PBStreamWriter.writeToStream(out, messages); }
  *
  * @author nichole

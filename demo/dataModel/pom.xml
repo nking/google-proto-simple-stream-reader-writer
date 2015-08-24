@@ -253,13 +253,13 @@
         <dependency>
             <groupId>com.google.code.google-proto-simple-reader-writer</groupId>
             <artifactId>gpb-stream-reader-writer</artifactId>
-            <version>1.5.3</version>
+            <version>1.5.4</version>
         </dependency>
     </dependencies>
     <properties>
         <java.source.version>1.7</java.source.version>
         <java.target.version>1.7</java.target.version>
         <netbeans.hint.useExternalMaven>true</netbeans.hint.useExternalMaven>
-        <appengine.api.version>1.9.3</appengine.api.version>
+        <appengine.api.version>1.9.25</appengine.api.version>
     </properties>
 </project>

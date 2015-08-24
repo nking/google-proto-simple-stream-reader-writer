@@ -4,7 +4,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.google.code.google-proto-simple-reader-writer</groupId>
     <artifactId>gpb-stream-reader-writer</artifactId>
-    <version>1.5.3</version>
+    <version>1.5.4</version>
     <packaging>jar</packaging>
     <name>Google Protocol Buffer Stream Reader and Writer</name>
     <description>A Java and Javascript library to read and write Google Protocol Buffer messages 

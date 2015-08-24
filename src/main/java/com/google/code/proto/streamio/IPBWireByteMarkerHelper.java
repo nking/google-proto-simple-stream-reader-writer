@@ -38,8 +38,8 @@ public interface IPBWireByteMarkerHelper {
     /**
      * Convert the marker byte array to an integer where each item is part of byte shifted integer
      *
-     * @param marker
-     * @return
+     * @param marker big endian byte marker
+     * @return value held in marker
      */
     int bytesToInteger(byte[] marker);
 
@@ -89,9 +89,9 @@ public interface IPBWireByteMarkerHelper {
     /**
      * Convert the integer into a byte array composed of byte shifted parts of the integer.
      *
-     * @param sz the integer to be represented by the returned byte array
-     * @return
+     * @param value the integer to be represented by the returned byte array
+     * @return big endian byte array holding value
      */
-    byte[] integerToBytesBigEndian(int sz);
+    byte[] integerToBytesBigEndian(int value);
     
 }

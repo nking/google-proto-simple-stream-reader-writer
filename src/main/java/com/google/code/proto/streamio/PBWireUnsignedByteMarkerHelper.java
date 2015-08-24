@@ -19,7 +19,7 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
      * (ascii being 0-127.  extended ascii is 128-255 but not all clients can read that).
      *
      * @param value the integer to be represented by the returned byte array
-     * @return
+     * @return big endian byte array holding the value
      */
     @Override
     public byte[] integerToBytesBigEndian(int value) {
@@ -42,8 +42,8 @@ public class PBWireUnsignedByteMarkerHelper extends AbstractPBWireByteMarkerHelp
      * that can only process strings (ascii being 0-127).  The maximum value that can be
      * returned is 2^(8*byteMarkerSize - 1) which is 2GB for a byteMarkerSize = 4.
      *
-     * @param marker
-     * @return
+     * @param marker big endian byte array holding the value
+     * @return original value held in the marker
      */
     @Override
      public int bytesToInteger(byte[] marker) {

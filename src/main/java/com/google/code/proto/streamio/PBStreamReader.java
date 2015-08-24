@@ -16,15 +16,15 @@ import java.util.logging.Logger;
 /**
  * A reader for an input stream of Google protocol buffer generated messages.
  *
- * <br />
- * <br />
- * <b>Usage:</b><br />
+ * <br>
+ * <br>
+ * <b>Usage:</b><br>
  * {@code PBStreamReader<YourProtocolBufferMessage> pbReader = new PBStreamReader();}
- * <br />
+ * <br>
  * {@code Builder builder = YourProtocolBufferMessage.newBuilder();}
- * <br />
+ * <br>
  * {@code List<YourProtocolBufferMessage> messages = pbReader.read(inStream, builder);}
- * <br />
+ * <br>
  *
  * @author nichole
  */
@@ -98,11 +98,11 @@ public class PBStreamReader<T extends GeneratedMessage> {
      * Note that if the stream has less than byteMarkerSize bytes in it, byteMarker will not have
      * been written to completely and an IOException will be thrown.
      *
-     * @param inStream
-     * @param remnant
-     * @param bufferSize
-     * @param startByte
-     * @param byteMarker
+     * @param inStream inputStream to read
+     * @param remnant remainder of bytes from last read
+     * @param bufferSize size of read blocks
+     * @param startByte the byte to look for as the start of a message
+     * @param byteMarker the delimeter between messages
      * @param byteMarkerSize this is the byteMarker minus the start byte size
      * @return byte array of bytes read from stream beyond the found byteMarker
      * @throws IOException
@@ -213,7 +213,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
      *
      * @param inStream input stream holding delimeters and encoded generated messages.
      * @param messageBuilder protocol buffer message builder to deserialize message.
-     * @param callback
+     * @param callback class to callback with messages read from inStream
      * @throws IOException
      * @throws InstantiationException
      * @throws IllegalAccessException
@@ -227,7 +227,7 @@ public class PBStreamReader<T extends GeneratedMessage> {
 
     /**
      * Read instances of GeneratedMessage from the input stream and use the
-     * given builder to unmarshall the messages.
+     * given builder to unmarshal the messages.
      *
      * @param inStream input stream holding delimeters and encoded generated messages.
      * @param messageBuilder protocol buffer message builder
@@ -245,15 +245,15 @@ public class PBStreamReader<T extends GeneratedMessage> {
 
     /**
      * Read instances of GeneratedMessage from the input stream and use the
-     * given builder to unmarshall the messages.
+     * given builder to unmarshal the messages.
      *
      * @param inStream input stream holding delimeters and encoded generated messages.
      * @param messageBuilder protocol buffer message builder
      * @param callback callback to handle each message as it's read from the stream.  can be null.
      * @return list of GeneratedMessage instances decoded and de-serialized from input stream
-     * @throws IOException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
+     * @throws IOException input output exception
+     * @throws InstantiationException dynamic class instantiation exception
+     * @throws IllegalAccessException IllegalAccessException
      */
     protected List<T> readFromStream(InputStream inStream, final Builder messageBuilder, IPBStreamReaderCallback callback)
     throws IOException, InstantiationException, IllegalAccessException {

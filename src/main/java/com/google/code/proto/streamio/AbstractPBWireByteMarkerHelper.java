@@ -53,8 +53,8 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
     /**
      * Convert the marker byte array to an integer
      *
-     * @param marker
-     * @return
+     * @param marker big endian byte array
+     * @return value held by the marker
      */
     @Override
     public abstract int bytesToInteger(byte[] marker);
@@ -62,11 +62,11 @@ public abstract class AbstractPBWireByteMarkerHelper implements IPBWireByteMarke
     /**
      * Convert the integer into a signed byte array composed of byte shifted parts of the integer.
      *
-     * @param sz the integer to be represented by the returned byte array
-     * @return
+     * @param value the integer to be represented by the returned byte array
+     * @return big endian byte array of the value
      */
     @Override
-     public abstract byte[] integerToBytesBigEndian(int sz);
+     public abstract byte[] integerToBytesBigEndian(int value);
 
     /**
      * Create a delimiter for the given GeneratedMessage.
