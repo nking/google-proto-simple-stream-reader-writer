@@ -7,13 +7,21 @@ that read and write the messages.
 For a javascript client, you'll also need 2 files from http://github.com/sirikata/protojs
    protobuf.js
    pbj.js
+
+NOTE that the project was last updated for appengine version 1.9.25
+and the encoding has been tested for browsers at that time, e.g. IE10
+and versions of Chrome browsers.
+
+The demo project will be updated to newer APIs one day but the priority
+for that is currently low.
     
 -----------------------------------------------------------------------------------
 To build:
    mvn clean compile package  OR  mvn clean install
 the binary will ./target/gpb-stream-reader-writer-{version}.jar
 
-A demo server and client are provided in directory demo and a README is there with build and
+A demo server and client are provided in directory demo and a README 
+is there with build and
 deploy instructions.  To build the demo:
    cd demo
    mvn clean package
